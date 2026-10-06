@@ -22,7 +22,13 @@ include(cmake/deps.cmake)
 set(FDL_SOURCES
     src/component.cpp
     src/config.cpp
+    src/discord/activity.cpp
+    src/discord/client.cpp
+    src/discord/ipc_connection.cpp
+    src/lifecycle.cpp
+    src/playback_callback.cpp
     src/prefs_page.cpp
+    src/presence.cpp
     src/foo_discord_listening.rc
 )
 

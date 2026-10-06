@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "guids.h"
+#include "lifecycle.h"
 #include "resource.h"
 
 namespace fdl {
@@ -28,6 +29,7 @@ public:
     void apply() override {
         config::enabled = IsDlgButtonChecked(IDC_ENABLED) == BST_CHECKED;
         config::app_id = GetAppIdText();
+        ApplySettings();
         m_callback->on_state_changed();
     }
 
