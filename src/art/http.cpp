@@ -103,7 +103,15 @@ HttpResponse HttpClient::Send(const wchar_t* method, const std::string& url, boo
         return response;
     }
     {
+        // 在同一個鎖內再檢查一次：若 Cancel() 剛好在前面的檢查之後才被呼叫，這裡要負責收尾，
+        // 否則這個請求會一路跑到逾時，拖住 foobar2000 的關閉。
         std::scoped_lock lock(m_mutex);
+        if (m_cancelled) {
+            WinHttpCloseHandle(request);
+            WinHttpCloseHandle(connect);
+            response.error = "cancelled";
+            return response;
+        }
         m_active_request = request;
     }
     // 結束時只關一次 request：若 Cancel() 已經關掉就不再重複關閉。

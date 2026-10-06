@@ -59,7 +59,8 @@ private:
     void Run(std::stop_token stop);
     void Process(const ArtRequest& request);
     void Load();
-    void SaveLocked() const;
+    /// 在 m_mutex 內取得快取快照，鎖外寫檔，避免磁碟慢時擋住主執行緒的 Resolve。
+    void Save();
     KeyState StateLocked(const std::string& key, std::string* url) const;
     void StoreResult(const std::string& key, std::optional<std::string> url);
     void DeferRetry(const std::string& key, const std::string& reason);
@@ -72,6 +73,10 @@ private:
     std::optional<ArtRequest> m_pending;
     std::shared_ptr<HttpClient> m_http;
     std::atomic<bool> m_cancel = false;
+    abort_callback_impl m_abort;
+    std::mutex m_file_mutex;
+    uint64_t m_cache_version = 0;   ///< 受 m_mutex 保護，每次快取變動 +1
+    uint64_t m_saved_version = 0;   ///< 受 m_file_mutex 保護
     std::jthread m_thread;
 };
 

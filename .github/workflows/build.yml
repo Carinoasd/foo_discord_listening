@@ -58,5 +58,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # 先寫成檔案：process substitution 裡的失敗不會讓 step 失敗，
+          # tag 與 VERSION 不一致或 CHANGELOG 缺段落時必須在這裡中止。
+          python3 scripts/release_notes.py "$GITHUB_REF_NAME" > release-notes.md
           gh release create "$GITHUB_REF_NAME" dist/*.fb2k-component \
-            --title "$GITHUB_REF_NAME" --notes-file <(python3 scripts/release_notes.py "$GITHUB_REF_NAME")
+            --title "$GITHUB_REF_NAME" --notes-file release-notes.md

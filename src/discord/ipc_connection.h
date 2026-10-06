@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include <optional>
+#include <stop_token>
 #include <string>
 
 namespace fdl::discord {
@@ -33,7 +34,7 @@ public:
     IpcConnection& operator=(const IpcConnection&) = delete;
 
     /// 依序嘗試 discord-ipc-0..9，送出 handshake 並等待 READY。失敗時 error 會填入原因。
-    bool Open(const std::string& client_id, std::string& error);
+    bool Open(const std::string& client_id, std::string& error, std::stop_token stop);
     void Close();
     bool IsOpen() const { return m_pipe != INVALID_HANDLE_VALUE; }
 

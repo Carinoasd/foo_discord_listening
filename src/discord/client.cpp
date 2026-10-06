@@ -54,11 +54,18 @@ void Client::Start() {
 }
 
 void Client::Stop() {
-    if (m_thread.joinable()) {
-        m_thread.request_stop();
-        m_cv.notify_all();
-        m_thread.join();
+    if (!m_thread.joinable()) {
+        return;
     }
+    m_thread.request_stop();
+    m_cv.notify_all();
+    // pipe 是同步 I/O：Discord 卡住時 ReadFile / WriteFile 可能一直阻塞，
+    // 所以在等待期間反覆取消該執行緒上的同步 I/O，確保 foobar2000 能順利關閉。
+    const auto handle = static_cast<HANDLE>(m_thread.native_handle());
+    while (WaitForSingleObject(handle, 100) == WAIT_TIMEOUT) {
+        CancelSynchronousIo(handle);
+    }
+    m_thread.join();
 }
 
 void Client::SetClientId(std::string client_id) {
@@ -139,7 +146,7 @@ void Client::Run(std::stop_token stop) {
                 }
                 set_status(ConnectionState::connecting, "Connecting...");
                 std::string error;
-                if (!conn.Open(client_id, error)) {
+                if (!conn.Open(client_id, error, stop)) {
                     set_status(ConnectionState::error, error);
                     next_retry = Clock::now() + retry_delay;
                     retry_delay = std::min<std::chrono::seconds>(retry_delay * 2, kMaxRetry);
@@ -194,9 +201,7 @@ void Client::Run(std::stop_token stop) {
         }
     }
 
-    if (conn.IsOpen()) {
-        conn.Send(Opcode::frame, { { "cmd", "SET_ACTIVITY" }, { "args", { { "pid", GetCurrentProcessId() } } }, { "nonce", std::to_string(++nonce) } });
-    }
+    // 不另外送清除訊息：pipe 關閉時 Discord 會自動清除狀態，也避免結束時多一個可能阻塞的寫入。
 }
 
 } // namespace fdl::discord

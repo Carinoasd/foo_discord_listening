@@ -61,12 +61,15 @@ void Service::Stop() {
     if (m_thread.joinable()) {
         m_thread.request_stop();
         m_cancel = true;
+        m_abort.abort();
         if (m_http) {
             m_http->Cancel();
         }
         m_cv.notify_all();
         m_thread.join();
     }
+    // 在 on_quit 就釋放 WinHTTP，不要拖到 DLL 卸載時（loader lock 底下）才關閉。
+    m_http.reset();
 }
 
 std::string Service::MusicBrainzKey(const TrackInfo& track) {
@@ -125,17 +128,23 @@ std::optional<std::string> Service::Resolve(ArtRequest request) {
 }
 
 void Service::ClearAll() {
-    std::scoped_lock lock(m_mutex);
-    m_cache.clear();
-    m_retry_after.clear();
-    SaveLocked();
+    {
+        std::scoped_lock lock(m_mutex);
+        m_cache.clear();
+        m_retry_after.clear();
+        ++m_cache_version;
+    }
+    Save();
 }
 
 void Service::Clear(const std::string& key) {
-    std::scoped_lock lock(m_mutex);
-    m_cache.erase(key);
-    m_retry_after.erase(key);
-    SaveLocked();
+    {
+        std::scoped_lock lock(m_mutex);
+        m_cache.erase(key);
+        m_retry_after.erase(key);
+        ++m_cache_version;
+    }
+    Save();
 }
 
 size_t Service::CachedCount() const {
@@ -192,14 +201,15 @@ void Service::Process(const ArtRequest& request) {
         if (result.status == LookupStatus::found) {
             return;
         }
-    } else if (mb == KeyState::found || mb == KeyState::waiting) {
+    } else if (mb == KeyState::found) {
         return;
     }
+    // MusicBrainz 確定沒有封面，或暫時連不上（waiting）時，若有設定上傳就改用上傳。
 
     if (up != KeyState::unknown) {
         return;
     }
-    const auto image = ExportCoverArt(request.track, kUploadSize, fb2k::noAbort);
+    const auto image = ExportCoverArt(request.track, kUploadSize, m_abort);
     if (!image) {
         StoreResult(request.upload_key, std::nullopt);
         return;
@@ -223,8 +233,9 @@ void Service::StoreResult(const std::string& key, std::optional<std::string> url
         std::scoped_lock lock(m_mutex);
         m_retry_after.erase(key);
         m_cache[key] = { url.value_or(std::string{}), NowSeconds() };
-        SaveLocked();
+        ++m_cache_version;
     }
+    Save();
     if (found) {
         fb2k::inMainThread([] { Guarded("art refresh", [] { presence::Refresh(); }); });
     }
@@ -265,19 +276,31 @@ void Service::Load() {
     }
 }
 
-void Service::SaveLocked() const {
-    if (m_file.empty()) {
+void Service::Save() {
+    nlohmann::json entries = nlohmann::json::object();
+    std::filesystem::path file;
+    uint64_t version = 0;
+    {
+        std::scoped_lock lock(m_mutex);
+        if (m_file.empty()) {
+            return;
+        }
+        for (const auto& [key, entry] : m_cache) {
+            entries[key] = { { "url", entry.url }, { "t", entry.saved_at } };
+        }
+        file = m_file;
+        version = m_cache_version;
+    }
+
+    std::scoped_lock file_lock(m_file_mutex);
+    // 主執行緒與背景執行緒可能同時存檔；較舊的快照晚到時不要蓋掉較新的內容。
+    if (version < m_saved_version) {
         return;
     }
-    nlohmann::json entries = nlohmann::json::object();
-    for (const auto& [key, entry] : m_cache) {
-        entries[key] = { { "url", entry.url }, { "t", entry.saved_at } };
-    }
     const nlohmann::json doc = { { "version", kCacheVersion }, { "entries", std::move(entries) } };
-
     std::error_code ec;
-    std::filesystem::create_directories(m_file.parent_path(), ec);
-    auto tmp = m_file;
+    std::filesystem::create_directories(file.parent_path(), ec);
+    auto tmp = file;
     tmp += L".tmp";
     {
         std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
@@ -288,9 +311,11 @@ void Service::SaveLocked() const {
         }
     }
     // 先寫暫存檔再取代，寫到一半當機也不會留下半個檔案。
-    if (!MoveFileExW(tmp.c_str(), m_file.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+    if (!MoveFileExW(tmp.c_str(), file.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
         Log("could not replace cover art cache ({})", GetLastError());
+        return;
     }
+    m_saved_version = version;
 }
 
 } // namespace fdl::art

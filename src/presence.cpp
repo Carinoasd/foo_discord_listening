@@ -63,6 +63,13 @@ std::optional<std::string> ResolveArt(const metadb_handle_ptr& track) {
     return art::Service::Get().Resolve(std::move(req));
 }
 
+/// 串流目前這首歌開始的時間（電台換歌時更新），非串流時不使用。
+std::optional<int64_t> g_stream_title_start_ms;
+
+int64_t RoundToSecond(int64_t ms) {
+    return (ms + 500) / 1000 * 1000;
+}
+
 int64_t NowMs() {
     using namespace std::chrono;
     return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
@@ -92,14 +99,21 @@ std::optional<discord::Activity> Build() {
     }
 
     if (paused) {
-        a.small_text = "Paused";
+        // 沒有可用的暫停圖示（small_image），所以把狀態寫在第一行，成員清單上也看得到。
+        a.details = a.details.empty() ? std::string("Paused") : a.details + " (Paused)";
     } else if (config::show_time) {
         const double position = pc->playback_get_position();
         const double length = pc->playback_get_length_ex();
-        const int64_t start = NowMs() - static_cast<int64_t>(position * 1000.0);
+        // 取整到秒：Discord 只顯示到秒，而且這樣重複刷新時算出的 activity 完全相同，
+        // Client 會略過不送，不浪費 Discord 的限流額度。
+        int64_t start = RoundToSecond(NowMs() - static_cast<int64_t>(position * 1000.0));
+        if (length <= 0 && g_stream_title_start_ms) {
+            // 串流的播放位置從開台起累計；電台換歌時改從換歌那一刻計時。
+            start = *g_stream_title_start_ms;
+        }
         a.start_ms = start;
         if (length > 0 && pc->playback_can_seek()) {
-            a.end_ms = start + static_cast<int64_t>(length * 1000.0);
+            a.end_ms = start + RoundToSecond(static_cast<int64_t>(length * 1000.0));
         }
     }
     return a;
@@ -108,7 +122,10 @@ std::optional<discord::Activity> Build() {
 } // namespace
 
 std::vector<std::string> ArtKeysFor(const metadb_handle_ptr& track) {
-    const auto req = BuildArtRequest(track, false);
+    // 正在播放的曲目要用與 ResolveArt 相同的方式計算（含串流的動態資訊），才清得到實際使用的快取。
+    metadb_handle_ptr playing;
+    const bool now_playing = playback_control::get()->get_now_playing(playing) && playing == track;
+    const auto req = BuildArtRequest(track, now_playing);
     std::vector<std::string> keys;
     for (const auto& key : { req.musicbrainz_key, req.upload_key }) {
         if (!key.empty()) {
@@ -116,6 +133,14 @@ std::vector<std::string> ArtKeysFor(const metadb_handle_ptr& track) {
         }
     }
     return keys;
+}
+
+void OnNewTrack() {
+    g_stream_title_start_ms.reset();
+}
+
+void OnStreamTitleChanged() {
+    g_stream_title_start_ms = RoundToSecond(NowMs());
 }
 
 void Refresh() {

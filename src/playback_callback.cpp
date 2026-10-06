@@ -21,7 +21,13 @@ public:
             | flag_on_playback_edited | flag_on_playback_dynamic_info_track;
     }
 
-    void on_playback_new_track(metadb_handle_ptr) override { Refresh(); }
+    void on_playback_new_track(metadb_handle_ptr) override {
+        Guarded("playback callback", [] { presence::OnNewTrack(); });
+        Refresh();
+        // 啟動時恢復成暫停狀態的情況下，new_track 當下 is_paused() 未必已經正確，稍後再確認一次。
+        // 狀態沒變的話算出的 activity 相同，不會多送給 Discord。
+        fb2k::callLater(0.5, [] { Refresh(); });
+    }
     void on_playback_stop(play_control::t_stop_reason reason) override {
         if (reason != play_control::stop_reason_starting_another) {
             Refresh();
@@ -35,7 +41,10 @@ public:
     void on_playback_seek(double) override { Refresh(); }
     void on_playback_pause(bool) override { Refresh(); }
     void on_playback_edited(metadb_handle_ptr) override { Refresh(); }
-    void on_playback_dynamic_info_track(const file_info&) override { Refresh(); }
+    void on_playback_dynamic_info_track(const file_info&) override {
+        Guarded("playback callback", [] { presence::OnStreamTitleChanged(); });
+        Refresh();
+    }
 
     void on_playback_starting(play_control::t_track_command, bool) override {}
     void on_playback_dynamic_info(const file_info&) override {}

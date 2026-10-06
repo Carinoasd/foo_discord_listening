@@ -30,7 +30,7 @@ IpcConnection::~IpcConnection() {
     Close();
 }
 
-bool IpcConnection::Open(const std::string& client_id, std::string& error) {
+bool IpcConnection::Open(const std::string& client_id, std::string& error, std::stop_token stop) {
     Close();
 
     for (int i = 0; i < 10 && !IsOpen(); ++i) {
@@ -49,7 +49,7 @@ bool IpcConnection::Open(const std::string& client_id, std::string& error) {
     }
 
     const auto deadline = std::chrono::steady_clock::now() + kReadyTimeout;
-    while (IsOpen() && std::chrono::steady_clock::now() < deadline) {
+    while (IsOpen() && !stop.stop_requested() && std::chrono::steady_clock::now() < deadline) {
         auto msg = Poll();
         if (!msg) {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
