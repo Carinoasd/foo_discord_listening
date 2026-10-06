@@ -33,12 +33,24 @@ constexpr char kReleaseMbid[] = "$if3($meta(MUSICBRAINZ_ALBUMID),$meta(MUSICBRAI
 constexpr char kReleaseGroupMbid[] = "$if3($meta(MUSICBRAINZ_RELEASEGROUPID),$meta(MUSICBRAINZ RELEASE GROUP ID))";
 
 std::optional<std::string> ResolveArt(const metadb_handle_ptr& track) {
-    art::TrackInfo info;
-    info.artist = FormatTitle(track, kArtArtist);
-    info.album = FormatTitle(track, kArtAlbum);
-    info.release_mbid = FormatTitle(track, kReleaseMbid);
-    info.release_group_mbid = FormatTitle(track, kReleaseGroupMbid);
-    return art::Service::Get().Resolve(info);
+    const auto source = config::GetArtSource();
+    art::ArtRequest req;
+    req.track = track;
+    req.info.artist = FormatTitle(track, kArtArtist);
+    req.info.album = FormatTitle(track, kArtAlbum);
+    req.info.release_mbid = FormatTitle(track, kReleaseMbid);
+    req.info.release_group_mbid = FormatTitle(track, kReleaseGroupMbid);
+    if (source != config::ArtSource::upload) {
+        req.musicbrainz_key = art::Service::MusicBrainzKey(req.info);
+    }
+    if (source != config::ArtSource::musicbrainz && !config::upload_command.get().is_empty()) {
+        const auto key = FormatTitle(track, config::upload_key_format.get());
+        if (!key.empty()) {
+            req.upload_key = "upload:" + key;
+            req.upload_command = config::upload_command.get().c_str();
+        }
+    }
+    return art::Service::Get().Resolve(std::move(req));
 }
 
 int64_t NowMs() {

@@ -21,3 +21,4 @@ build_and_run() {
 
 build_and_run activity_test "$ROOT/src/discord/activity.cpp"
 build_and_run musicbrainz_test "$ROOT/src/art/musicbrainz_query.cpp"
+build_and_run uploader_test "$ROOT/src/art/uploader_output.cpp"

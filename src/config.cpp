@@ -19,6 +19,9 @@ cfg_string large_text_format(guids::cfg_large_text_format, default_large_text_fo
 cfg_bool show_time(guids::cfg_show_time, default_show_time);
 cfg_int pause_mode(guids::cfg_pause_mode, static_cast<int64_t>(default_pause_mode));
 cfg_bool art_enabled(guids::cfg_art_enabled, default_art_enabled);
+cfg_int art_source(guids::cfg_art_source, static_cast<int64_t>(default_art_source));
+cfg_string upload_command(guids::cfg_upload_command, default_upload_command);
+cfg_string upload_key_format(guids::cfg_upload_key_format, default_upload_key_format);
 
 std::string EffectiveAppId() {
     const auto id = app_id.get();
@@ -38,6 +41,11 @@ int64_t StatusDisplay() {
 PauseMode GetPauseMode() {
     const auto v = static_cast<PauseMode>(pause_mode.get());
     return v == PauseMode::clear || v == PauseMode::keep ? v : default_pause_mode;
+}
+
+ArtSource GetArtSource() {
+    const auto v = art_source.get();
+    return v >= 0 && v <= 2 ? static_cast<ArtSource>(v) : default_art_source;
 }
 
 } // namespace fdl::config

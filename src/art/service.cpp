@@ -7,6 +7,8 @@
 #include "art/service.h"
 
 #include "art/http.h"
+#include "art/local_art.h"
+#include "art/uploader.h"
 #include "json_util.h"
 #include "log.h"
 #include "presence.h"
@@ -23,6 +25,8 @@ constexpr int64_t kNegativeTtlSeconds = 7 * 24 * 3600;
 constexpr auto kRetryAfterError = std::chrono::minutes(10);
 // 快速切歌時不必每首都查，等使用者停下來再查。
 constexpr auto kDebounce = std::chrono::milliseconds(1500);
+// 上傳前縮圖的最長邊。Discord 顯示的大圖不需要更大。
+constexpr unsigned kUploadSize = 512;
 
 int64_t NowSeconds() {
     using namespace std::chrono;
@@ -43,12 +47,20 @@ void Service::Start(std::filesystem::path cache_file) {
     }
     Load();
     m_http = std::make_shared<HttpClient>();
-    m_thread = std::jthread([this](std::stop_token stop) { Guarded("art worker", [&] { Run(stop); }); });
+    m_thread = std::jthread([this](std::stop_token stop) {
+        // WIC 需要 COM。
+        const HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        Guarded("art worker", [&] { Run(stop); });
+        if (SUCCEEDED(hr)) {
+            CoUninitialize();
+        }
+    });
 }
 
 void Service::Stop() {
     if (m_thread.joinable()) {
         m_thread.request_stop();
+        m_cancel = true;
         if (m_http) {
             m_http->Cancel();
         }
@@ -57,7 +69,7 @@ void Service::Stop() {
     }
 }
 
-std::string Service::KeyFor(const TrackInfo& track) {
+std::string Service::MusicBrainzKey(const TrackInfo& track) {
     if (IsMbid(track.release_mbid)) {
         return "release:" + AsciiLower(track.release_mbid);
     }
@@ -70,20 +82,43 @@ std::string Service::KeyFor(const TrackInfo& track) {
     return {};
 }
 
-std::optional<std::string> Service::Resolve(const TrackInfo& track) {
-    const auto key = KeyFor(track);
+Service::KeyState Service::StateLocked(const std::string& key, std::string* url) const {
     if (key.empty()) {
-        return std::nullopt;
+        return KeyState::none;
     }
+    if (const auto it = m_cache.find(key); it != m_cache.end()) {
+        const auto& entry = it->second;
+        if (!entry.url.empty()) {
+            *url = entry.url;
+            return KeyState::found;
+        }
+        if (NowSeconds() - entry.saved_at < kNegativeTtlSeconds) {
+            return KeyState::none;
+        }
+    }
+    if (const auto it = m_retry_after.find(key); it != m_retry_after.end() && std::chrono::steady_clock::now() < it->second) {
+        return KeyState::waiting;
+    }
+    return KeyState::unknown;
+}
+
+std::optional<std::string> Service::Resolve(ArtRequest request) {
     {
         std::scoped_lock lock(m_mutex);
-        if (const auto it = m_cache.find(key); it != m_cache.end() && IsFreshLocked(it->second)) {
-            return it->second.url.empty() ? std::nullopt : std::optional(it->second.url);
+        std::string url;
+        const auto mb = StateLocked(request.musicbrainz_key, &url);
+        if (mb == KeyState::found) {
+            return url;
         }
-        if (const auto it = m_retry_after.find(key); it != m_retry_after.end() && std::chrono::steady_clock::now() < it->second) {
+        const auto up = request.upload_command.empty() ? KeyState::none : StateLocked(request.upload_key, &url);
+        if (up == KeyState::found) {
+            return url;
+        }
+        if (mb != KeyState::unknown && up != KeyState::unknown) {
+            // 兩種來源都已確定沒有封面或正在等待重試。
             return std::nullopt;
         }
-        m_pending = { key, track };
+        m_pending = std::move(request);
     }
     m_cv.notify_all();
     return std::nullopt;
@@ -108,58 +143,97 @@ size_t Service::CachedCount() const {
     return m_cache.size();
 }
 
-bool Service::IsFreshLocked(const Entry& entry) const {
-    return !entry.url.empty() || NowSeconds() - entry.saved_at < kNegativeTtlSeconds;
-}
-
 void Service::Run(std::stop_token stop) {
     while (!stop.stop_requested()) {
-        std::pair<std::string, TrackInfo> job;
+        ArtRequest job;
         {
             std::unique_lock lock(m_mutex);
             m_cv.wait(lock, stop, [&] { return m_pending.has_value(); });
             if (stop.stop_requested()) {
                 break;
             }
-            // 等一下，若期間又切歌就改查最新那首。
-            const auto key = m_pending->first;
-            m_cv.wait_for(lock, stop, kDebounce, [&] { return !m_pending || m_pending->first != key; });
-            if (stop.stop_requested() || !m_pending) {
+            // 快速切歌時不必每首都查：等一下，若期間又換了曲目就改處理最新那首。
+            const auto track = m_pending->track;
+            m_cv.wait_for(lock, stop, kDebounce, [&] { return !m_pending || m_pending->track != track; });
+            if (stop.stop_requested() || !m_pending || m_pending->track != track) {
                 continue;
             }
             job = std::move(*m_pending);
             m_pending.reset();
-            if (m_cache.contains(job.first) && IsFreshLocked(m_cache.at(job.first))) {
-                continue;
-            }
         }
-
-        LookupResult result;
         try {
-            result = LookupCoverArt(*m_http, job.second);
+            Process(job);
         } catch (const std::exception& e) {
-            Log("cover art lookup failed: {}", e.what());
-            result.status = LookupStatus::network_error;
-        }
-        if (stop.stop_requested()) {
-            break;
-        }
-
-        {
-            std::scoped_lock lock(m_mutex);
-            if (result.status == LookupStatus::network_error) {
-                m_retry_after[job.first] = std::chrono::steady_clock::now() + kRetryAfterError;
-                Log("cover art lookup for \"{}\" failed, will retry later", job.first);
-                continue;
-            }
-            m_retry_after.erase(job.first);
-            m_cache[job.first] = { result.url, NowSeconds() };
-            SaveLocked();
-        }
-        if (result.status == LookupStatus::found) {
-            fb2k::inMainThread([] { Guarded("art refresh", [] { presence::Refresh(); }); });
+            Log("cover art error: {}", e.what());
         }
     }
+}
+
+void Service::Process(const ArtRequest& request) {
+    KeyState mb;
+    KeyState up;
+    {
+        std::scoped_lock lock(m_mutex);
+        std::string url;
+        mb = StateLocked(request.musicbrainz_key, &url);
+        up = request.upload_command.empty() ? KeyState::none : StateLocked(request.upload_key, &url);
+    }
+
+    if (mb == KeyState::unknown) {
+        const auto result = LookupCoverArt(*m_http, request.info);
+        if (m_cancel) {
+            return;
+        }
+        if (result.status == LookupStatus::network_error) {
+            DeferRetry(request.musicbrainz_key, "MusicBrainz request failed");
+            return;
+        }
+        StoreResult(request.musicbrainz_key, result.status == LookupStatus::found ? std::optional(result.url) : std::nullopt);
+        if (result.status == LookupStatus::found) {
+            return;
+        }
+    } else if (mb == KeyState::found || mb == KeyState::waiting) {
+        return;
+    }
+
+    if (up != KeyState::unknown) {
+        return;
+    }
+    const auto image = ExportCoverArt(request.track, kUploadSize, fb2k::noAbort);
+    if (!image) {
+        StoreResult(request.upload_key, std::nullopt);
+        return;
+    }
+    const auto result = RunUploader(request.upload_command, *image, m_cancel);
+    std::error_code ec;
+    std::filesystem::remove(*image, ec);
+    if (m_cancel) {
+        return;
+    }
+    if (result.url.empty()) {
+        DeferRetry(request.upload_key, "upload failed: " + result.error);
+        return;
+    }
+    StoreResult(request.upload_key, result.url);
+}
+
+void Service::StoreResult(const std::string& key, std::optional<std::string> url) {
+    const bool found = url.has_value();
+    {
+        std::scoped_lock lock(m_mutex);
+        m_retry_after.erase(key);
+        m_cache[key] = { url.value_or(std::string{}), NowSeconds() };
+        SaveLocked();
+    }
+    if (found) {
+        fb2k::inMainThread([] { Guarded("art refresh", [] { presence::Refresh(); }); });
+    }
+}
+
+void Service::DeferRetry(const std::string& key, const std::string& reason) {
+    Log("cover art for \"{}\": {}; will retry in 10 minutes", key, reason);
+    std::scoped_lock lock(m_mutex);
+    m_retry_after[key] = std::chrono::steady_clock::now() + kRetryAfterError;
 }
 
 void Service::Load() {
