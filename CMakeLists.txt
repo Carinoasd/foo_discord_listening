@@ -52,3 +52,13 @@ target_compile_definitions(foo_discord_listening PRIVATE
 target_compile_options(foo_discord_listening PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4 /utf-8 /permissive- /fp:fast>)
 target_link_libraries(foo_discord_listening PRIVATE fb2k_sdk nlohmann_json::nlohmann_json)
 target_precompile_headers(foo_discord_listening PRIVATE src/stdafx.h)
+
+# 本機測試工具：以元件同一份 IPC 程式碼探測 Discord（不進交付包）。
+option(FDL_BUILD_TOOLS "Build local test tools" OFF)
+if(FDL_BUILD_TOOLS)
+    add_executable(ipc_probe tests/ipc_probe.cpp src/discord/ipc_connection.cpp src/discord/activity.cpp)
+    target_include_directories(ipc_probe PRIVATE tests/win_stub src)
+    target_compile_definitions(ipc_probe PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_compile_options(ipc_probe PRIVATE /W4 /utf-8 /permissive-)
+    target_link_libraries(ipc_probe PRIVATE nlohmann_json::nlohmann_json)
+endif()
