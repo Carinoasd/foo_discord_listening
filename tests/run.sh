@@ -9,7 +9,15 @@ if [ ! -f "$JSON_DIR/nlohmann/json.hpp" ]; then
     mkdir -p "$JSON_DIR/nlohmann"
     curl -sfLo "$JSON_DIR/nlohmann/json.hpp" https://github.com/nlohmann/json/releases/download/v3.12.0/json.hpp
 fi
-g++ -std=c++20 -Wall -Wextra -Werror -O1 -fsanitize=address,undefined \
-    -I"$ROOT/tests/stub" -I"$ROOT/src" -I"$JSON_DIR" \
-    "$ROOT/src/discord/activity.cpp" "$ROOT/tests/activity_test.cpp" -o "$OUT/activity_test"
-"$OUT/activity_test"
+build_and_run() {
+    local name=$1
+    shift
+    g++ -std=c++20 -Wall -Wextra -Werror -O1 -fsanitize=address,undefined \
+        -I"$ROOT/tests/stub" -I"$ROOT/src" -I"$JSON_DIR" \
+        "$@" "$ROOT/tests/$name.cpp" -o "$OUT/$name"
+    echo "== $name"
+    "$OUT/$name"
+}
+
+build_and_run activity_test "$ROOT/src/discord/activity.cpp"
+build_and_run musicbrainz_test "$ROOT/src/art/musicbrainz_query.cpp"

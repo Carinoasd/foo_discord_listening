@@ -20,6 +20,7 @@ inline constexpr char default_state_format[] = "[%artist%]";
 inline constexpr char default_large_text_format[] = "[%album%]";
 inline constexpr bool default_show_time = true;
 inline constexpr PauseMode default_pause_mode = PauseMode::keep;
+inline constexpr bool default_art_enabled = true;
 
 /// 內建的 Discord 應用程式 ID；使用者沒填時採用。
 inline constexpr char builtin_app_id[] = "";
@@ -33,6 +34,7 @@ extern cfg_string state_format;
 extern cfg_string large_text_format;
 extern cfg_bool show_time;
 extern cfg_int pause_mode; // PauseMode
+extern cfg_bool art_enabled;
 
 /// 使用者設定的 app ID，沒設定則回傳內建值。
 std::string EffectiveAppId();

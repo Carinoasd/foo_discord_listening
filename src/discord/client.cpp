@@ -7,6 +7,7 @@
 #include "discord/client.h"
 
 #include "discord/ipc_connection.h"
+#include "json_util.h"
 #include "log.h"
 
 #include <chrono>
@@ -152,11 +153,11 @@ void Client::Run(std::stop_token stop) {
             }
 
             while (auto msg = conn.Poll()) {
-                if (msg->opcode == Opcode::frame && msg->payload.value("evt", std::string{}) == "ERROR") {
-                    const auto& data = msg->payload.value("data", nlohmann::json::object());
-                    Log("Discord rejected the activity: {}", data.value("message", std::string{ "unknown error" }));
+                if (msg->opcode == Opcode::frame && json::GetString(msg->payload, "evt") == "ERROR") {
+                    const auto& data = json::GetObject(msg->payload, "data");
+                    Log("Discord rejected the activity (code {}): {}", json::GetInt(data, "code"), json::GetString(data, "message", "unknown error"));
                 } else if (msg->opcode == Opcode::close) {
-                    Log("Discord closed the connection: {}", msg->payload.value("message", std::string{}));
+                    Log("Discord closed the connection: {}", json::GetString(msg->payload, "message"));
                     conn.Close();
                 }
             }

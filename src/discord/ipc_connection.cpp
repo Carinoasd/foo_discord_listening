@@ -5,6 +5,7 @@
 #include "stdafx.h"
 
 #include "discord/ipc_connection.h"
+#include "json_util.h"
 
 #include <chrono>
 #include <thread>
@@ -56,11 +57,11 @@ bool IpcConnection::Open(const std::string& client_id, std::string& error) {
         }
         if (msg->opcode == Opcode::close) {
             // 例如 client_id 無效時，Discord 會回 CLOSE 並附上 message。
-            error = msg->payload.value("message", std::string{ "connection closed by Discord" });
+            error = json::GetString(msg->payload, "message", "connection closed by Discord");
             Close();
             return false;
         }
-        if (msg->opcode == Opcode::frame && msg->payload.value("evt", std::string{}) == "READY") {
+        if (msg->opcode == Opcode::frame && json::GetString(msg->payload, "evt") == "READY") {
             return true;
         }
     }

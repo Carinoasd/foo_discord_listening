@@ -18,6 +18,7 @@ cfg_string state_format(guids::cfg_state_format, default_state_format);
 cfg_string large_text_format(guids::cfg_large_text_format, default_large_text_format);
 cfg_bool show_time(guids::cfg_show_time, default_show_time);
 cfg_int pause_mode(guids::cfg_pause_mode, static_cast<int64_t>(default_pause_mode));
+cfg_bool art_enabled(guids::cfg_art_enabled, default_art_enabled);
 
 std::string EffectiveAppId() {
     const auto id = app_id.get();

@@ -20,6 +20,10 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 include(cmake/deps.cmake)
 
 set(FDL_SOURCES
+    src/art/http.cpp
+    src/art/musicbrainz.cpp
+    src/art/musicbrainz_query.cpp
+    src/art/service.cpp
     src/component.cpp
     src/config.cpp
     src/discord/activity.cpp

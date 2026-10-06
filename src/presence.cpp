@@ -6,6 +6,7 @@
 
 #include "presence.h"
 
+#include "art/service.h"
 #include "config.h"
 #include "discord/client.h"
 
@@ -23,6 +24,21 @@ std::string FormatTitle(const metadb_handle_ptr& track, const char* pattern) {
         track->format_title(nullptr, out, script, nullptr);
     }
     return out.c_str();
+}
+
+// 欄位不存在時 %album% 會變成 "?"，所以一律用 [...] 包起來，缺值就得到空字串（上游 #95 錯誤封面的根因之一）。
+constexpr char kArtArtist[] = "[%album artist%]";
+constexpr char kArtAlbum[] = "[%album%]";
+constexpr char kReleaseMbid[] = "$if3($meta(MUSICBRAINZ_ALBUMID),$meta(MUSICBRAINZ ALBUM ID))";
+constexpr char kReleaseGroupMbid[] = "$if3($meta(MUSICBRAINZ_RELEASEGROUPID),$meta(MUSICBRAINZ RELEASE GROUP ID))";
+
+std::optional<std::string> ResolveArt(const metadb_handle_ptr& track) {
+    art::TrackInfo info;
+    info.artist = FormatTitle(track, kArtArtist);
+    info.album = FormatTitle(track, kArtAlbum);
+    info.release_mbid = FormatTitle(track, kReleaseMbid);
+    info.release_group_mbid = FormatTitle(track, kReleaseGroupMbid);
+    return art::Service::Get().Resolve(info);
 }
 
 int64_t NowMs() {
@@ -47,6 +63,11 @@ std::optional<discord::Activity> Build() {
     a.details = FormatTitle(track, config::details_format.get());
     a.state = FormatTitle(track, config::state_format.get());
     a.large_text = FormatTitle(track, config::large_text_format.get());
+    if (config::art_enabled) {
+        if (auto url = ResolveArt(track)) {
+            a.large_image = std::move(*url);
+        }
+    }
 
     if (paused) {
         a.small_text = "Paused";
