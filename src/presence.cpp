@@ -15,12 +15,14 @@
 namespace fdl::presence {
 namespace {
 
-std::string FormatTitle(const metadb_handle_ptr& track, const char* pattern) {
+/// now_playing 為 true 時改用 playback_format_title_ex：會一併處理串流的動態資訊（電台目前播放的曲名）
+/// 與 %playback_time% 之類的播放欄位。
+std::string FormatTitle(const metadb_handle_ptr& track, const char* pattern, bool now_playing = true) {
     titleformat_object::ptr script;
     titleformat_compiler::get()->compile_safe_ex(script, pattern);
     pfc::string8 out;
-    // playback_format_title 會一併處理串流的動態資訊（電台目前播放的曲名）。
-    if (!playback_control::get()->playback_format_title_ex(track, nullptr, out, script, nullptr, playback_control::display_level_all)) {
+    if (!now_playing
+        || !playback_control::get()->playback_format_title_ex(track, nullptr, out, script, nullptr, playback_control::display_level_all)) {
         track->format_title(nullptr, out, script, nullptr);
     }
     return out.c_str();
@@ -32,23 +34,31 @@ constexpr char kArtAlbum[] = "[%album%]";
 constexpr char kReleaseMbid[] = "$if3($meta(MUSICBRAINZ_ALBUMID),$meta(MUSICBRAINZ ALBUM ID))";
 constexpr char kReleaseGroupMbid[] = "$if3($meta(MUSICBRAINZ_RELEASEGROUPID),$meta(MUSICBRAINZ RELEASE GROUP ID))";
 
-std::optional<std::string> ResolveArt(const metadb_handle_ptr& track) {
-    const auto source = config::GetArtSource();
+/// 組出封面請求。兩個 key 都會計算，是否使用由 ResolveArt 依設定決定。
+art::ArtRequest BuildArtRequest(const metadb_handle_ptr& track, bool now_playing) {
     art::ArtRequest req;
     req.track = track;
-    req.info.artist = FormatTitle(track, kArtArtist);
-    req.info.album = FormatTitle(track, kArtAlbum);
-    req.info.release_mbid = FormatTitle(track, kReleaseMbid);
-    req.info.release_group_mbid = FormatTitle(track, kReleaseGroupMbid);
-    if (source != config::ArtSource::upload) {
-        req.musicbrainz_key = art::Service::MusicBrainzKey(req.info);
+    req.info.artist = FormatTitle(track, kArtArtist, now_playing);
+    req.info.album = FormatTitle(track, kArtAlbum, now_playing);
+    req.info.release_mbid = FormatTitle(track, kReleaseMbid, now_playing);
+    req.info.release_group_mbid = FormatTitle(track, kReleaseGroupMbid, now_playing);
+    req.musicbrainz_key = art::Service::MusicBrainzKey(req.info);
+    if (const auto key = FormatTitle(track, config::upload_key_format.get(), now_playing); !key.empty()) {
+        req.upload_key = "upload:" + key;
+    }
+    return req;
+}
+
+std::optional<std::string> ResolveArt(const metadb_handle_ptr& track) {
+    const auto source = config::GetArtSource();
+    auto req = BuildArtRequest(track, true);
+    if (source == config::ArtSource::upload) {
+        req.musicbrainz_key.clear();
     }
     if (source != config::ArtSource::musicbrainz && !config::upload_command.get().is_empty()) {
-        const auto key = FormatTitle(track, config::upload_key_format.get());
-        if (!key.empty()) {
-            req.upload_key = "upload:" + key;
-            req.upload_command = config::upload_command.get().c_str();
-        }
+        req.upload_command = config::upload_command.get().c_str();
+    } else {
+        req.upload_key.clear();
     }
     return art::Service::Get().Resolve(std::move(req));
 }
@@ -96,6 +106,17 @@ std::optional<discord::Activity> Build() {
 }
 
 } // namespace
+
+std::vector<std::string> ArtKeysFor(const metadb_handle_ptr& track) {
+    const auto req = BuildArtRequest(track, false);
+    std::vector<std::string> keys;
+    for (const auto& key : { req.musicbrainz_key, req.upload_key }) {
+        if (!key.empty()) {
+            keys.push_back(key);
+        }
+    }
+    return keys;
+}
 
 void Refresh() {
     auto& client = discord::Client::Get();

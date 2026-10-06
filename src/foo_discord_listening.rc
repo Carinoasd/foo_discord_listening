@@ -7,15 +7,46 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
-IDD_PREFS DIALOGEX 0, 0, 332, 288
+IDD_PREFS DIALOGEX 0, 0, 332, 300
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    AUTOCHECKBOX    "Show what I'm playing on Discord", IDC_ENABLED, 7, 7, 318, 10
-    LTEXT           "Discord application ID (leave empty to use the built-in one):", IDC_STATIC, 7, 26, 318, 8
-    EDITTEXT        IDC_APP_ID, 7, 37, 160, 12, ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "Status:", IDC_STATIC, 7, 60, 30, 8
-    LTEXT           "", IDC_STATUS, 40, 60, 285, 8
+    AUTOCHECKBOX    "Show what I'm playing on Discord", IDC_ENABLED, 7, 4, 318, 10
+
+    GROUPBOX        "Activity", IDC_STATIC, 7, 18, 318, 64
+    LTEXT           "Type:", IDC_STATIC, 15, 32, 70, 8
+    COMBOBOX        IDC_ACTIVITY_TYPE, 90, 30, 110, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Status shows:", IDC_STATIC, 15, 48, 70, 8
+    COMBOBOX        IDC_STATUS_DISPLAY, 90, 46, 110, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "When paused:", IDC_STATIC, 15, 64, 70, 8
+    COMBOBOX        IDC_PAUSE_MODE, 90, 62, 110, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    AUTOCHECKBOX    "Show progress bar", IDC_SHOW_TIME, 210, 32, 110, 10
+
+    GROUPBOX        "Text (title formatting)", IDC_STATIC, 7, 86, 318, 64
+    LTEXT           "Line 1:", IDC_STATIC, 15, 100, 70, 8
+    EDITTEXT        IDC_DETAILS_FORMAT, 90, 98, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 2:", IDC_STATIC, 15, 116, 70, 8
+    EDITTEXT        IDC_STATE_FORMAT, 90, 114, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 3 / art tooltip:", IDC_STATIC, 15, 132, 72, 8
+    EDITTEXT        IDC_LARGE_TEXT_FORMAT, 90, 130, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Album art", IDC_STATIC, 7, 154, 318, 96
+    AUTOCHECKBOX    "Show album art", IDC_ART_ENABLED, 15, 166, 120, 10
+    LTEXT           "Source:", IDC_STATIC, 15, 182, 70, 8
+    COMBOBOX        IDC_ART_SOURCE, 90, 180, 160, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Upload command:", IDC_STATIC, 15, 198, 70, 8
+    EDITTEXT        IDC_UPLOAD_COMMAND, 90, 196, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Upload once per:", IDC_STATIC, 15, 214, 70, 8
+    EDITTEXT        IDC_UPLOAD_KEY, 90, 212, 228, 12, ES_AUTOHSCROLL
+    PUSHBUTTON      "Clear art cache", IDC_CLEAR_CACHE, 15, 230, 70, 14
+    LTEXT           "", IDC_CACHE_INFO, 90, 233, 228, 8
+
+    GROUPBOX        "Discord", IDC_STATIC, 7, 254, 318, 42
+    LTEXT           "Application ID:", IDC_STATIC, 15, 267, 70, 8
+    EDITTEXT        IDC_APP_ID, 90, 265, 110, 12, ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "(empty = built-in)", IDC_STATIC, 205, 267, 110, 8
+    LTEXT           "Status:", IDC_STATIC, 15, 282, 70, 8
+    LTEXT           "", IDC_STATUS, 90, 282, 228, 8
 END
 
 VS_VERSION_INFO VERSIONINFO
