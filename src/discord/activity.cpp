@@ -16,9 +16,17 @@ constexpr size_t kMaxButtonLabel = 32;
 constexpr size_t kMaxButtonUrl = 512;
 constexpr size_t kMaxButtons = 2;
 constexpr std::string_view kZeroWidthSpace = "\xE2\x80\x8B";
+constexpr std::string_view kEllipsis = "\xE2\x80\xA6";
 
 bool IsContinuationByte(char c) {
     return (static_cast<unsigned char>(c) & 0xC0) == 0x80;
+}
+
+std::string PadToMin(std::string text, size_t units) {
+    for (; units < kMinText; ++units) {
+        text += kZeroWidthSpace;
+    }
+    return text;
 }
 
 bool IsValidUrl(std::string_view url, size_t max_len) {
@@ -45,7 +53,7 @@ void PutUrl(nlohmann::json& obj, const char* key, std::string_view url) {
 
 } // namespace
 
-std::string FitText(std::string_view text, size_t max_chars) {
+std::string FitText(std::string_view text, size_t max_units) {
     // 去掉前後空白：Discord 會自行 trim，trim 後長度不足會讓整個 activity 被拒。
     while (!text.empty() && static_cast<unsigned char>(text.front()) <= ' ') {
         text.remove_prefix(1);
@@ -57,33 +65,29 @@ std::string FitText(std::string_view text, size_t max_chars) {
         return {};
     }
 
-    size_t chars = 0;
-    size_t cut = text.size();
-    for (size_t i = 0; i < text.size(); ++i) {
-        if (IsContinuationByte(text[i])) {
-            continue;
+    // Discord 以 UTF-16 code unit 計算長度：BMP 以外的字元（例如 emoji）算 2。
+    // 走訪每個 code point，記下「放得下刪節號」的最後切點，超過上限就在該處截斷。
+    size_t units = 0;
+    size_t cut_with_ellipsis = 0;
+    for (size_t i = 0; i < text.size();) {
+        const auto lead = static_cast<unsigned char>(text[i]);
+        size_t len = 1;
+        while (i + len < text.size() && IsContinuationByte(text[i + len])) {
+            ++len;
         }
-        if (chars == max_chars) {
-            cut = i;
-            break;
+        const size_t cp_units = lead >= 0xF0 ? 2 : 1;
+        if (units + cp_units <= max_units - 1) {
+            cut_with_ellipsis = i + len;
         }
-        ++chars;
+        units += cp_units;
+        if (units > max_units) {
+            std::string result(text.substr(0, cut_with_ellipsis));
+            result += kEllipsis;
+            return PadToMin(std::move(result), cut_with_ellipsis == 0 ? 1 : 2);
+        }
+        i += len;
     }
-
-    std::string result(text.substr(0, cut));
-    if (cut < text.size() && max_chars >= 1) {
-        // 截斷時把最後一個字換成刪節號，讓使用者知道內容被截掉了。
-        size_t last = result.size();
-        do {
-            --last;
-        } while (last > 0 && IsContinuationByte(result[last]));
-        result.resize(last);
-        result += "\xE2\x80\xA6";
-    }
-    for (; chars < kMinText; ++chars) {
-        result += kZeroWidthSpace;
-    }
-    return result;
+    return PadToMin(std::string(text), units);
 }
 
 nlohmann::json ToJson(const Activity& activity) {

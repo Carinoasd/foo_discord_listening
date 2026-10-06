@@ -19,8 +19,8 @@ BEGIN
 END
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION FDL_VERSION_MAJOR,FDL_VERSION_MINOR,FDL_VERSION_PATCH,0
+ PRODUCTVERSION FDL_VERSION_MAJOR,FDL_VERSION_MINOR,FDL_VERSION_PATCH,0
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0x0L
  FILEOS VOS_NT_WINDOWS32
@@ -33,12 +33,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Carinoasd"
             VALUE "FileDescription", "Discord Listening for foobar2000"
-            VALUE "FileVersion", "0.1.0"
+            VALUE "FileVersion", FDL_VERSION
             VALUE "InternalName", "foo_discord_listening"
             VALUE "LegalCopyright", "(C) 2026 Carinoasd"
             VALUE "OriginalFilename", "foo_discord_listening.dll"
             VALUE "ProductName", "foo_discord_listening"
-            VALUE "ProductVersion", "0.1.0"
+            VALUE "ProductVersion", FDL_VERSION
         END
     END
     BLOCK "VarFileInfo"

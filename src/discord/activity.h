@@ -59,8 +59,8 @@ struct Activity {
 /// 轉成 SET_ACTIVITY 的 activity 物件，會依 Discord 的限制截斷或略過不合法的欄位。
 nlohmann::json ToJson(const Activity& activity);
 
-/// 以 UTF-8 code point 為單位截斷到 max_chars，太短（Discord 要求至少 2 字元）時補零寬空白。
-/// 空字串回傳空字串，呼叫端應略過該欄位。
-std::string FitText(std::string_view text, size_t max_chars);
+/// 截斷到 max_units 個 UTF-16 code unit（Discord 的計算方式），不切斷字元，截斷時以刪節號結尾；
+/// 太短（Discord 要求至少 2）時補零寬空白。空字串回傳空字串，呼叫端應略過該欄位。
+std::string FitText(std::string_view text, size_t max_units);
 
 } // namespace fdl::discord

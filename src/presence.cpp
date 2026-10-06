@@ -37,13 +37,13 @@ std::optional<discord::Activity> Build() {
         return std::nullopt;
     }
     const bool paused = pc->is_paused();
-    if (paused && static_cast<config::PauseMode>(config::pause_mode.get()) == config::PauseMode::clear) {
+    if (paused && config::GetPauseMode() == config::PauseMode::clear) {
         return std::nullopt;
     }
 
     discord::Activity a;
-    a.type = static_cast<discord::ActivityType>(config::activity_type.get());
-    a.status_display = static_cast<discord::StatusDisplay>(config::status_display.get());
+    a.type = static_cast<discord::ActivityType>(config::ActivityType());
+    a.status_display = static_cast<discord::StatusDisplay>(config::StatusDisplay());
     a.details = FormatTitle(track, config::details_format.get());
     a.state = FormatTitle(track, config::state_format.get());
     a.large_text = FormatTitle(track, config::large_text_format.get());

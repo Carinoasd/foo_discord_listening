@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # 從 WSL 呼叫 Windows 端的 MSVC 建置（本機開發用，不進交付包）。
 # 原始碼先同步到 Windows 本機磁碟再建置，避免 MSVC 處理 \\wsl.localhost 路徑的問題。
-# 用法：scripts/build.sh [Release|Debug]
+# 用法：scripts/build.sh [Release|Debug] [x64|x86]
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 CONFIG=${1:-Release}
+ARCH=${2:-x64}
+VCVARS=$([ "$ARCH" = x86 ] && echo vcvars32.bat || echo vcvars64.bat)
 
 win_env() { (cd /mnt/c && cmd.exe /c "echo %$1%" 2>/dev/null | tr -d '\r'); }
 
@@ -20,13 +22,13 @@ rsync -a --delete --exclude .git --exclude build --exclude dist "$ROOT/" "$WSL_B
 
 cat > "$WSL_BASE/build.cmd" <<CMD
 @echo off
-call "$VS_PATH\\VC\\Auxiliary\\Build\\vcvars64.bat" >nul || exit /b 1
-cmake -S "%~dp0src" -B "%~dp0out-$CONFIG" -G Ninja -DCMAKE_BUILD_TYPE=$CONFIG || exit /b 1
-cmake --build "%~dp0out-$CONFIG" || exit /b 1
+call "$VS_PATH\\VC\\Auxiliary\\Build\\$VCVARS" >nul || exit /b 1
+cmake -S "%~dp0src" -B "%~dp0out-$ARCH-$CONFIG" -G Ninja -DCMAKE_BUILD_TYPE=$CONFIG || exit /b 1
+cmake --build "%~dp0out-$ARCH-$CONFIG" || exit /b 1
 CMD
 
 (cd /mnt/c && cmd.exe /c "$WIN_BASE\\build.cmd")
 
-mkdir -p "$ROOT/build"
-cp "$WSL_BASE/out-$CONFIG/foo_discord_listening.dll" "$ROOT/build/"
-echo "OK: build/foo_discord_listening.dll ($CONFIG)"
+mkdir -p "$ROOT/build/$ARCH"
+cp "$WSL_BASE/out-$ARCH-$CONFIG/foo_discord_listening.dll" "$ROOT/build/$ARCH/"
+echo "OK: build/$ARCH/foo_discord_listening.dll ($CONFIG)"

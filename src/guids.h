@@ -19,4 +19,31 @@ inline constexpr GUID cfg_large_text_format = { 0x6a10e86b, 0x3c3f, 0x4bf4, { 0x
 inline constexpr GUID cfg_show_time = { 0x1ba70c32, 0x64c8, 0x440c, { 0x9e, 0x3d, 0xa0, 0x88, 0x0c, 0xd1, 0xae, 0x49 } };
 inline constexpr GUID cfg_pause_mode = { 0x388b4408, 0x7be7, 0x45b3, { 0xb4, 0xd5, 0x6c, 0x7f, 0x98, 0x02, 0x12, 0x08 } };
 
+// 上游曾因兩個設定共用同一個 GUID，導致其中一個設定每次重啟都被還原（#103、#109）。
+// 新增 GUID 時務必加進這個清單，編譯期就會擋下重複。
+inline constexpr GUID all[] = {
+    prefs_page,
+    cfg_enabled,
+    cfg_app_id,
+    cfg_activity_type,
+    cfg_status_display,
+    cfg_details_format,
+    cfg_state_format,
+    cfg_large_text_format,
+    cfg_show_time,
+    cfg_pause_mode,
+};
+
+consteval bool AllUnique() {
+    for (size_t i = 0; i < std::size(all); ++i) {
+        for (size_t j = i + 1; j < std::size(all); ++j) {
+            if (all[i] == all[j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+static_assert(AllUnique(), "GUID 重複");
+
 } // namespace fdl::guids

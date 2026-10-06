@@ -4,10 +4,15 @@
 
 #include "stdafx.h"
 
+#include "log.h"
 #include "presence.h"
 
 namespace fdl {
 namespace {
+
+void Refresh() {
+    Guarded("playback callback", [] { presence::Refresh(); });
+}
 
 class PlaybackCallback : public play_callback_static {
 public:
@@ -16,17 +21,21 @@ public:
             | flag_on_playback_edited | flag_on_playback_dynamic_info_track;
     }
 
-    void on_playback_new_track(metadb_handle_ptr) override { presence::Refresh(); }
+    void on_playback_new_track(metadb_handle_ptr) override { Refresh(); }
     void on_playback_stop(play_control::t_stop_reason reason) override {
-        // 換曲時 foobar2000 會先送 starting_another，接著馬上送 new_track，略過可避免狀態閃一下消失。
         if (reason != play_control::stop_reason_starting_another) {
-            presence::Refresh();
+            Refresh();
+            return;
         }
+        // 換曲時會先收到 starting_another，接著才是 new_track，這時立刻清除會讓狀態閃一下。
+        // 但若下一首其實沒開始（例如清單最後一首按下一首），就不會有 new_track，
+        // 所以稍後再依實際播放狀態刷新一次，避免狀態永遠卡住（上游 #85）。
+        fb2k::callLater(1.0, [] { Refresh(); });
     }
-    void on_playback_seek(double) override { presence::Refresh(); }
-    void on_playback_pause(bool) override { presence::Refresh(); }
-    void on_playback_edited(metadb_handle_ptr) override { presence::Refresh(); }
-    void on_playback_dynamic_info_track(const file_info&) override { presence::Refresh(); }
+    void on_playback_seek(double) override { Refresh(); }
+    void on_playback_pause(bool) override { Refresh(); }
+    void on_playback_edited(metadb_handle_ptr) override { Refresh(); }
+    void on_playback_dynamic_info_track(const file_info&) override { Refresh(); }
 
     void on_playback_starting(play_control::t_track_command, bool) override {}
     void on_playback_dynamic_info(const file_info&) override {}

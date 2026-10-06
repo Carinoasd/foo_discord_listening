@@ -20,10 +20,13 @@ static int g_failed = 0;
         }                                                               \
     } while (0)
 
-static size_t CodePoints(const std::string& s) {
+// 以 Discord 的方式計算長度：UTF-16 code unit。
+static size_t Units(const std::string& s) {
     size_t n = 0;
     for (unsigned char c : s) {
-        n += (c & 0xC0) != 0x80;
+        if ((c & 0xC0) != 0x80) {
+            n += c >= 0xF0 ? 2 : 1;
+        }
     }
     return n;
 }
@@ -45,10 +48,22 @@ int main() {
     std::string cjk;
     for (int i = 0; i < 200; ++i) cjk += "歌";
     const auto cut = FitText(cjk, 128);
-    CHECK(CodePoints(cut) == 128);
+    CHECK(Units(cut) == 128);
     CHECK(cut.ends_with("\xE2\x80\xA6"));
     CHECK(FitText(std::string(128, 'x'), 128) == std::string(128, 'x'));
-    CHECK(CodePoints(FitText(std::string(129, 'x'), 128)) == 128);
+    CHECK(Units(FitText(std::string(129, 'x'), 128)) == 128);
+
+    // emoji 在 UTF-16 佔 2 個 unit：64 個 emoji 剛好 128，65 個就要截斷，且不能切開 surrogate pair
+    const std::string emoji = "\xF0\x9F\x8E\xB5"; // 🎵
+    std::string e64, e65;
+    for (int i = 0; i < 64; ++i) e64 += emoji;
+    e65 = e64 + emoji;
+    CHECK(FitText(e64, 128) == e64);
+    const auto e65cut = FitText(e65, 128);
+    CHECK(Units(e65cut) <= 128);
+    CHECK(e65cut.ends_with("\xE2\x80\xA6"));
+    CHECK(e65cut.size() == 63 * 4 + 3); // 63 個 emoji + 刪節號
+    CHECK(FitText(emoji, 128) == emoji); // 單一 emoji 已是 2 unit，不需補白
 
     // ToJson：基本欄位
     Activity a;
@@ -89,7 +104,7 @@ int main() {
     CHECK(j["buttons"].size() == 2);
     CHECK(j["buttons"][1]["label"] == "Two");
     b.buttons = { { std::string(40, 'L'), "https://a" } };
-    CHECK(CodePoints(ToJson(b)["buttons"][0]["label"]) == 32);
+    CHECK(Units(ToJson(b)["buttons"][0]["label"]) == 32);
 
     // details_url 只在有 details 時送出，且必須是 http(s)
     Activity u;

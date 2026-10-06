@@ -24,4 +24,19 @@ std::string EffectiveAppId() {
     return id.is_empty() ? std::string(builtin_app_id) : std::string(id.c_str());
 }
 
+int64_t ActivityType() {
+    const auto v = activity_type.get();
+    return v == 0 || v == 2 || v == 3 ? v : default_activity_type;
+}
+
+int64_t StatusDisplay() {
+    const auto v = status_display.get();
+    return v >= 0 && v <= 2 ? v : default_status_display;
+}
+
+PauseMode GetPauseMode() {
+    const auto v = static_cast<PauseMode>(pause_mode.get());
+    return v == PauseMode::clear || v == PauseMode::keep ? v : default_pause_mode;
+}
+
 } // namespace fdl::config

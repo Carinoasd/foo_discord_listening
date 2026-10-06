@@ -24,6 +24,11 @@ set(JSON_Install OFF CACHE INTERNAL "")
 FetchContent_MakeAvailable(fb2k_sdk_src wtl_src json_src)
 
 set(SDK_ROOT "${fb2k_sdk_src_SOURCE_DIR}")
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(FDL_ARCH x64)
+else()
+    set(FDL_ARCH Win32)
+endif()
 set(WTL_INCLUDE "${wtl_src_SOURCE_DIR}/lib/native/include")
 
 # SDK 各子專案編譯成靜態庫，檔案清單與 SDK 內附的 vcxproj 一致（pfc 另外排除非 Windows 的檔案）。
@@ -45,5 +50,5 @@ fdl_sdk_lib(fb2k_component_client foobar2000/foobar2000_component_client)
 add_library(fb2k_sdk INTERFACE)
 target_link_libraries(fb2k_sdk INTERFACE
     fb2k_component_client fb2k_helpers fb2k_libppui fb2k_sdk_core fb2k_pfc
-    "${SDK_ROOT}/foobar2000/shared/shared-x64.lib"
+    "${SDK_ROOT}/foobar2000/shared/shared-${FDL_ARCH}.lib"
 )

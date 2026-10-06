@@ -37,4 +37,9 @@ extern cfg_int pause_mode; // PauseMode
 /// 使用者設定的 app ID，沒設定則回傳內建值。
 std::string EffectiveAppId();
 
+// 持久化的 enum 只能新增值，不能重新編號；讀到未知值（例如從新版降級）一律回落到預設。
+int64_t ActivityType();
+int64_t StatusDisplay();
+PauseMode GetPauseMode();
+
 } // namespace fdl::config

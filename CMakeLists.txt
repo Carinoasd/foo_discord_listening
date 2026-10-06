@@ -37,7 +37,10 @@ target_include_directories(foo_discord_listening PRIVATE src)
 target_compile_definitions(foo_discord_listening PRIVATE
     UNICODE _UNICODE
     FDL_VERSION="${FDL_VERSION}"
+    FDL_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+    FDL_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+    FDL_VERSION_PATCH=${PROJECT_VERSION_PATCH}
 )
-target_compile_options(foo_discord_listening PRIVATE /W4 /utf-8 /permissive- /fp:fast)
+target_compile_options(foo_discord_listening PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4 /utf-8 /permissive- /fp:fast>)
 target_link_libraries(foo_discord_listening PRIVATE fb2k_sdk nlohmann_json::nlohmann_json)
 target_precompile_headers(foo_discord_listening PRIVATE src/stdafx.h)
