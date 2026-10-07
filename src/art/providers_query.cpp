@@ -80,6 +80,12 @@ std::string BuildLastFmAlbumUrl(std::string_view artist, std::string_view album,
         + "&album=" + UrlEncode(album) + "&api_key=" + UrlEncode(api_key);
 }
 
+bool IsLastFmServiceError(const nlohmann::json& doc) {
+    // https://www.last.fm/api/errorcodes ：6 = 找不到專輯（正常的「沒有」），其餘多為服務或 key 的問題。
+    const auto code = json::GetInt(doc, "error");
+    return code != 0 && code != 6;
+}
+
 std::optional<std::string> PickLastFmImage(const nlohmann::json& info) {
     const auto& album = json::GetObject(info, "album");
     const auto images = album.find("image");

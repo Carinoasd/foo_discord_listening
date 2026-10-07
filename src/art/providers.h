@@ -29,6 +29,8 @@ std::optional<std::string> PickITunesArtwork(const nlohmann::json& search, std::
 LookupResult LookupLastFm(HttpClient& http, const TrackInfo& track, std::string_view api_key);
 
 std::string BuildLastFmAlbumUrl(std::string_view artist, std::string_view album, std::string_view api_key);
+/// Last.fm 回傳的是服務層級的錯誤（key 無效、被停權、限流、暫時故障），而不是「找不到這張專輯」。
+bool IsLastFmServiceError(const nlohmann::json& doc);
 /// 取最大尺寸的封面；Last.fm 的「沒有圖片」預設星星圖會被排除。
 std::optional<std::string> PickLastFmImage(const nlohmann::json& info);
 

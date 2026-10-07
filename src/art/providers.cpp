@@ -7,6 +7,8 @@
 #include "art/providers.h"
 
 #include "art/http.h"
+#include "json_util.h"
+#include "log.h"
 
 #include <chrono>
 #include <thread>
@@ -62,10 +64,16 @@ LookupResult LookupLastFm(HttpClient& http, const TrackInfo& track, std::string_
         return { LookupStatus::network_error, {} };
     }
     const auto doc = nlohmann::json::parse(res.body, nullptr, false);
-    if (!doc.is_discarded()) {
-        if (auto url = PickLastFmImage(doc)) {
-            return { LookupStatus::found, std::move(*url) };
-        }
+    if (doc.is_discarded()) {
+        return { LookupStatus::network_error, {} };
+    }
+    if (IsLastFmServiceError(doc)) {
+        // API key 錯誤、被停權或超過限流：不是「這張專輯沒有封面」，不能快取成沒有。
+        Log("Last.fm: {} (error {})", json::GetString(doc, "message"), json::GetInt(doc, "error"));
+        return { LookupStatus::network_error, {} };
+    }
+    if (auto url = PickLastFmImage(doc)) {
+        return { LookupStatus::found, std::move(*url) };
     }
     return { LookupStatus::not_found, {} };
 }

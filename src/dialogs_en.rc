@@ -1,0 +1,119 @@
+// foo_discord_listening
+// Copyright (C) 2026 Carinoasd
+// SPDX-License-Identifier: MIT
+
+// 英文對話框，由 foo_discord_listening.rc 依語言引入。
+
+IDD_PREFS DIALOGEX 0, 0, 332, 276
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    AUTOCHECKBOX    "Show what I'm playing on Discord", IDC_ENABLED, 7, 3, 318, 10
+
+    GROUPBOX        "Activity", IDC_STATIC, 7, 16, 318, 74
+    LTEXT           "Type:", IDC_STATIC, 15, 30, 70, 8
+    COMBOBOX        IDC_ACTIVITY_TYPE, 90, 28, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    AUTOCHECKBOX    "Show progress bar", IDC_SHOW_TIME, 218, 30, 104, 10
+    LTEXT           "Status shows:", IDC_STATIC, 15, 45, 70, 8
+    COMBOBOX        IDC_STATUS_DISPLAY, 90, 43, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "When paused:", IDC_STATIC, 15, 60, 70, 8
+    COMBOBOX        IDC_PAUSE_MODE, 90, 58, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "When stopped:", IDC_STATIC, 15, 75, 70, 8
+    COMBOBOX        IDC_STOP_MODE, 90, 73, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    GROUPBOX        "Text (title formatting)", IDC_STATIC, 7, 94, 318, 59
+    LTEXT           "Line 1:", IDC_STATIC, 15, 108, 70, 8
+    EDITTEXT        IDC_DETAILS_FORMAT, 90, 106, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 2:", IDC_STATIC, 15, 123, 70, 8
+    EDITTEXT        IDC_STATE_FORMAT, 90, 121, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 3 / art tooltip:", IDC_STATIC, 15, 138, 72, 8
+    EDITTEXT        IDC_LARGE_TEXT_FORMAT, 90, 136, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Icons", IDC_STATIC, 7, 157, 318, 58
+    AUTOCHECKBOX    "Show a play / pause / stop icon on the album art", IDC_SMALL_ICONS, 15, 169, 300, 10
+    AUTOCHECKBOX    "Show a placeholder image when a track has no album art", IDC_NO_ART_IMAGE, 15, 184, 300, 10
+    AUTOCHECKBOX    "Add (Paused) / (Stopped) to line 1", IDC_PAUSED_TEXT, 15, 199, 300, 10
+
+    GROUPBOX        "Discord", IDC_STATIC, 7, 219, 318, 40
+    LTEXT           "Application ID:", IDC_STATIC, 15, 232, 70, 8
+    EDITTEXT        IDC_APP_ID, 90, 230, 120, 12, ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "(empty = built-in)", IDC_STATIC, 215, 232, 105, 8
+    LTEXT           "Status:", IDC_STATIC, 15, 246, 70, 8
+    LTEXT           "", IDC_STATUS, 90, 246, 228, 8
+END
+
+IDD_PREFS_ART DIALOGEX 0, 0, 332, 276
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    AUTOCHECKBOX    "Show album art", IDC_ART_ENABLED, 7, 3, 318, 10
+
+    GROUPBOX        "Sources (tried in this order)", IDC_STATIC, 7, 16, 318, 106
+    AUTOCHECKBOX    "MusicBrainz", IDC_USE_MUSICBRAINZ, 15, 30, 80, 10
+    LTEXT           "Server:", IDC_STATIC, 100, 31, 40, 8
+    EDITTEXT        IDC_MUSICBRAINZ_SERVER, 145, 28, 173, 12, ES_AUTOHSCROLL
+    AUTOCHECKBOX    "iTunes", IDC_USE_ITUNES, 15, 46, 80, 10
+    LTEXT           "Store country:", IDC_STATIC, 100, 47, 50, 8
+    EDITTEXT        IDC_ITUNES_COUNTRY, 155, 44, 30, 12, ES_AUTOHSCROLL | ES_UPPERCASE
+    AUTOCHECKBOX    "Last.fm", IDC_USE_LASTFM, 15, 62, 80, 10
+    LTEXT           "API key:", IDC_STATIC, 100, 63, 40, 8
+    EDITTEXT        IDC_LASTFM_KEY, 145, 60, 173, 12, ES_AUTOHSCROLL
+    AUTOCHECKBOX    "Upload local art", IDC_USE_UPLOAD, 15, 78, 80, 10
+    LTEXT           "Command:", IDC_STATIC, 100, 79, 40, 8
+    EDITTEXT        IDC_UPLOAD_COMMAND, 145, 76, 173, 12, ES_AUTOHSCROLL
+    LTEXT           "Art you set by hand (right-click > Utilities > Set Discord album art) always comes first. Empty server = musicbrainz.org.", IDC_STATIC, 15, 94, 303, 20
+
+    GROUPBOX        "Matching", IDC_STATIC, 7, 126, 318, 50
+    LTEXT           "Same album if equal:", IDC_STATIC, 15, 140, 75, 8
+    EDITTEXT        IDC_UPLOAD_KEY, 90, 138, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "No art for tracks:", IDC_STATIC, 15, 156, 75, 8
+    EDITTEXT        IDC_ART_FILTER, 90, 154, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Cache", IDC_STATIC, 7, 180, 318, 34
+    PUSHBUTTON      "Clear art cache", IDC_CLEAR_CACHE, 15, 193, 70, 14
+    LTEXT           "", IDC_CACHE_INFO, 90, 196, 228, 8
+END
+
+IDD_PREFS_LINKS DIALOGEX 0, 0, 332, 276
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "All fields use title formatting. Leave a field empty to turn it off. Spaces and non-ASCII characters in links are encoded automatically.", IDC_STATIC, 7, 3, 318, 18
+
+    GROUPBOX        "Links (opened when someone clicks the text or the album art)", IDC_STATIC, 7, 24, 318, 59
+    LTEXT           "Line 1 link:", IDC_STATIC, 15, 38, 70, 8
+    EDITTEXT        IDC_DETAILS_URL, 90, 36, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 2 link:", IDC_STATIC, 15, 53, 70, 8
+    EDITTEXT        IDC_STATE_URL, 90, 51, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Album art link:", IDC_STATIC, 15, 68, 70, 8
+    EDITTEXT        IDC_LARGE_URL, 90, 66, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Buttons (shown to other people, up to 2)", IDC_STATIC, 7, 87, 318, 74
+    LTEXT           "Button 1 text:", IDC_STATIC, 15, 101, 70, 8
+    EDITTEXT        IDC_BUTTON1_LABEL, 90, 99, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Button 1 link:", IDC_STATIC, 15, 116, 70, 8
+    EDITTEXT        IDC_BUTTON1_URL, 90, 114, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Button 2 text:", IDC_STATIC, 15, 131, 70, 8
+    EDITTEXT        IDC_BUTTON2_LABEL, 90, 129, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Button 2 link:", IDC_STATIC, 15, 146, 70, 8
+    EDITTEXT        IDC_BUTTON2_URL, 90, 144, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Privacy", IDC_STATIC, 7, 165, 318, 46
+    LTEXT           "Hide tracks:", IDC_STATIC, 15, 179, 70, 8
+    EDITTEXT        IDC_FILTER, 90, 177, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "foobar2000 search syntax, e.g.  %genre% HAS podcast  OR  %path% HAS private", IDC_STATIC, 90, 193, 228, 16
+
+    LTEXT           "Example button: text  Search on YouTube   link  https://www.youtube.com/results?search_query=[%artist% ]%title%", IDC_STATIC, 7, 217, 318, 18
+END
+
+IDD_MANUAL_ART DIALOGEX 0, 0, 300, 82
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set Discord album art"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "", IDC_MANUAL_ALBUM, 7, 7, 286, 8
+    LTEXT           "Image URL (https://...). Leave empty to go back to automatic album art.", IDC_STATIC, 7, 21, 286, 8
+    EDITTEXT        IDC_MANUAL_URL, 7, 33, 286, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK", IDOK, 189, 58, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 243, 58, 50, 14
+END

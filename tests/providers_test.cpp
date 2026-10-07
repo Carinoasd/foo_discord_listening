@@ -54,6 +54,11 @@ int main() {
     // Last.fm 對沒有封面的專輯回傳的星星預設圖要排除
     CHECK(!PickLastFmImage(json::parse(R"({"album":{"image":[{"#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png","size":"extralarge"}]}})")));
     CHECK(!PickLastFmImage(json::parse(R"({"error":6,"message":"Album not found"})")));
+    // key 錯誤、限流是服務錯誤（稍後重試），找不到專輯不是
+    CHECK(IsLastFmServiceError(json::parse(R"({"error":10,"message":"Invalid API key"})")));
+    CHECK(IsLastFmServiceError(json::parse(R"({"error":29,"message":"Rate limit exceeded"})")));
+    CHECK(!IsLastFmServiceError(json::parse(R"({"error":6,"message":"Album not found"})")));
+    CHECK(!IsLastFmServiceError(lastfm));
 
     // ---- MusicBrainz release 後援 ----
     CHECK(BuildReleaseBrowseUrl("", "9162580E-5DF4-32DE-80CC-F45A8D8A9B1D")
