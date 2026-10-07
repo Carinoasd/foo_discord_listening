@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 namespace fdl {
 
@@ -47,8 +48,9 @@ enum class StringId {
 /// 依 Windows 介面語言回傳文字（繁體中文或英文）。可從任何執行緒呼叫。
 const char* Tr(StringId id);
 
-/// 把文字中的 {} 換成數字。
+/// 把文字中的 {} 換成數字或字串。
 std::string Format(StringId id, size_t value);
+std::string Format(StringId id, std::string_view value);
 
 /// 介面是否使用繁體中文。
 bool UseTraditionalChinese();

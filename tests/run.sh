@@ -23,3 +23,5 @@ build_and_run activity_test "$ROOT/src/discord/activity.cpp"
 build_and_run musicbrainz_test "$ROOT/src/art/musicbrainz_query.cpp"
 build_and_run uploader_test "$ROOT/src/art/uploader_output.cpp"
 build_and_run providers_test "$ROOT/src/art/providers_query.cpp" "$ROOT/src/art/musicbrainz_query.cpp"
+build_and_run import_rich_test "$ROOT/src/import_rich.cpp"
+build_and_run update_test

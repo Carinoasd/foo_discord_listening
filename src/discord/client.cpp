@@ -9,7 +9,7 @@
 #include "discord/ipc_connection.h"
 #include "json_util.h"
 #include "log.h"
-#include "strings.h"
+#include "i18n.h"
 
 #include <chrono>
 #include <deque>

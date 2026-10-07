@@ -34,13 +34,15 @@ set(FDL_SOURCES
     src/discord/activity.cpp
     src/discord/client.cpp
     src/discord/ipc_connection.cpp
+    src/import_rich.cpp
     src/lifecycle.cpp
     src/log.cpp
     src/menus.cpp
     src/playback_callback.cpp
     src/prefs_page.cpp
     src/presence.cpp
-    src/strings.cpp
+    src/i18n.cpp
+    src/update_check.cpp
     src/foo_discord_listening.rc
 )
 
@@ -60,14 +62,14 @@ target_precompile_headers(foo_discord_listening PRIVATE src/stdafx.h)
 # 本機測試工具：以元件同一份 IPC 程式碼探測 Discord（不進交付包）。
 option(FDL_BUILD_TOOLS "Build local test tools" OFF)
 if(FDL_BUILD_TOOLS)
-    add_executable(ipc_probe tests/ipc_probe.cpp src/discord/ipc_connection.cpp src/discord/activity.cpp src/strings.cpp)
+    add_executable(ipc_probe tests/ipc_probe.cpp src/discord/ipc_connection.cpp src/discord/activity.cpp src/i18n.cpp)
     target_include_directories(ipc_probe PRIVATE tests/win_stub src)
     target_compile_definitions(ipc_probe PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
     target_compile_options(ipc_probe PRIVATE /W4 /utf-8 /permissive-)
     target_link_libraries(ipc_probe PRIVATE nlohmann_json::nlohmann_json)
 
     add_executable(client_test tests/client_test.cpp tests/win_stub/log_stub.cpp
-        src/discord/client.cpp src/discord/ipc_connection.cpp src/discord/activity.cpp src/strings.cpp)
+        src/discord/client.cpp src/discord/ipc_connection.cpp src/discord/activity.cpp src/i18n.cpp)
     target_include_directories(client_test PRIVATE tests/win_stub src)
     target_compile_definitions(client_test PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
     target_compile_options(client_test PRIVATE /W4 /utf-8 /permissive-)

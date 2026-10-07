@@ -10,7 +10,7 @@
 #include "config.h"
 #include "discord/client.h"
 #include "log.h"
-#include "strings.h"
+#include "i18n.h"
 
 #include <chrono>
 #include <map>

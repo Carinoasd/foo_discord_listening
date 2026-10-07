@@ -11,7 +11,7 @@
 #include "log.h"
 #include "presence.h"
 #include "resource.h"
-#include "strings.h"
+#include "i18n.h"
 
 #include "art/service.h"
 #include "discord/activity.h"

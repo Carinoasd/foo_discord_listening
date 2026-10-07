@@ -4,7 +4,7 @@
 
 #include <stdafx.h> // 角括號：測試工具會改用 tests/win_stub 的版本
 
-#include "strings.h"
+#include "i18n.h"
 
 #include <array>
 
@@ -73,12 +73,16 @@ const char* Tr(StringId id) {
     return UseTraditionalChinese() ? e.zh_tw : e.en;
 }
 
-std::string Format(StringId id, size_t value) {
+std::string Format(StringId id, std::string_view value) {
     std::string s = Tr(id);
     if (const auto pos = s.find("{}"); pos != std::string::npos) {
-        s.replace(pos, 2, std::to_string(value));
+        s.replace(pos, 2, value);
     }
     return s;
+}
+
+std::string Format(StringId id, size_t value) {
+    return Format(id, std::to_string(value));
 }
 
 } // namespace fdl

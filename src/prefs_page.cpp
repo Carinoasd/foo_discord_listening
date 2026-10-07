@@ -11,7 +11,8 @@
 #include "lifecycle.h"
 #include "presence.h"
 #include "resource.h"
-#include "strings.h"
+#include "i18n.h"
+#include "update_check.h"
 
 #include <span>
 
@@ -262,8 +263,11 @@ private:
 
     void UpdateStatus() {
         if constexpr (Idd == IDD_PREFS) {
-            const auto status = discord::Client::Get().GetStatus();
-            uSetDlgItemText(*this, IDC_STATUS, status.message.c_str());
+            auto text = discord::Client::Get().GetStatus().message;
+            if (const auto newer = update::NewerVersion(); !newer.empty()) {
+                text += "   " + Format(StringId::update_available, newer);
+            }
+            uSetDlgItemText(*this, IDC_STATUS, text.c_str());
         }
         if constexpr (Idd == IDD_PREFS_ART) {
             const auto count = art::Service::Get().CachedCount();

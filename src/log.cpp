@@ -16,7 +16,7 @@ namespace fdl {
 namespace {
 
 advconfig_branch_factory g_branch("Discord Listening", guids::advconfig_branch, advconfig_branch::guid_branch_tools, 0);
-advconfig_checkbox_factory g_debug_log("Write debug log (profile\\\\foo_discord_listening\\\\debug.log)", "foo_discord_listening.debug_log",
+advconfig_checkbox_factory g_debug_log("Write debug log (profile\\foo_discord_listening\\debug.log)", "foo_discord_listening.debug_log",
                                        guids::cfg_debug_log, guids::advconfig_branch, 0, false);
 
 // 紀錄檔超過這個大小就從頭重寫，避免長時間開著除錯紀錄把磁碟塞滿。
