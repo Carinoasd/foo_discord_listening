@@ -34,7 +34,7 @@ int main() {
          "artworkUrl100":"https://is1-ssl.mzstatic.com/image/thumb/Music/h/100x100bb.jpg"}
     ]})");
     // 「- Single」後綴、合作曲的歌手名稱
-    CHECK(PickITunesArtwork(itunes, "vα-liv", "WANNABE EP COLLECTION 3") == "https://is1-ssl.mzstatic.com/image/thumb/Music/a/600x600bb.jpg");
+    CHECK(PickITunesArtwork(itunes, "vα-liv", "WANNABE EP COLLECTION 3") == "https://is1-ssl.mzstatic.com/image/thumb/Music/a/1000x1000bb.jpg");
     // 〜 與 ～ 視為相同
     CHECK(PickITunesArtwork(itunes, "HoneyWorks", "ねぇ、好きって痛いよ。〜告白実行委員会キャラクターソング集〜").has_value());
     // 專輯名稱相同但歌手不同時不能採用

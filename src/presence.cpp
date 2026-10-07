@@ -167,11 +167,27 @@ discord::Activity BuildFor(const metadb_handle_ptr& track, PlayState state, bool
 /// 停止後保留狀態時使用的最後一首曲目。
 metadb_handle_ptr g_last_track;
 
+/// 開始暫停（或停止）的時間；播放中為 nullopt。用來在閒置太久後清除狀態。
+std::optional<int64_t> g_idle_since_ms;
+
+bool IdleTooLong() {
+    const auto minutes = config::idle_clear_minutes.get();
+    return minutes > 0 && g_idle_since_ms && NowMs() - *g_idle_since_ms >= minutes * 60'000;
+}
+
+/// 閒置計時到期時主動刷新一次，不必等到有其他播放事件才清除。
+void ScheduleIdleCheck() {
+    const auto minutes = config::idle_clear_minutes.get();
+    if (minutes > 0) {
+        fb2k::callLater(static_cast<double>(minutes) * 60.0 + 1.0, [] { Guarded("idle check", [] { Refresh(); }); });
+    }
+}
+
 std::optional<discord::Activity> Build() {
     auto pc = playback_control::get();
     metadb_handle_ptr track;
     if (!pc->is_playing() || !pc->get_now_playing(track)) {
-        if (config::GetStopMode() == config::StopMode::keep && g_last_track.is_valid()
+        if (config::GetStopMode() == config::StopMode::keep && g_last_track.is_valid() && !IdleTooLong()
             && !Matches(config::filter_query.get(), g_last_track)) {
             return BuildFor(g_last_track, PlayState::stopped, false);
         }
@@ -184,7 +200,7 @@ std::optional<discord::Activity> Build() {
     }
 
     const bool paused = pc->is_paused();
-    if (paused && config::GetPauseMode() == config::PauseMode::clear) {
+    if (paused && (config::GetPauseMode() == config::PauseMode::clear || IdleTooLong())) {
         return std::nullopt;
     }
     auto a = BuildFor(track, paused ? PlayState::paused : PlayState::playing, true);
@@ -237,6 +253,21 @@ std::string ManualArtKeyFor(const metadb_handle_ptr& track) {
 
 void OnNewTrack() {
     g_stream_title_start_ms.reset();
+    g_idle_since_ms.reset();
+}
+
+void OnPause(bool paused) {
+    if (paused) {
+        g_idle_since_ms = NowMs();
+        ScheduleIdleCheck();
+    } else {
+        g_idle_since_ms.reset();
+    }
+}
+
+void OnStop() {
+    g_idle_since_ms = NowMs();
+    ScheduleIdleCheck();
 }
 
 void OnStreamTitleChanged() {

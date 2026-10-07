@@ -71,7 +71,7 @@ int main() {
     CHECK(!PickReleaseGroup(json::parse(R"({"release-groups":[{"id":5,"title":["A"],"score":"100"}]})"), "A"));
 
     CHECK(CoverArtUrl("release", "9162580E-5DF4-32DE-80CC-F45A8D8A9B1D")
-          == "https://coverartarchive.org/release/9162580e-5df4-32de-80cc-f45a8d8a9b1d/front-500");
+          == "https://coverartarchive.org/release/9162580e-5df4-32de-80cc-f45a8d8a9b1d/front-1200");
 
     if (g_failed == 0) {
         std::printf("all tests passed\n");

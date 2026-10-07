@@ -23,6 +23,7 @@ cfg_bool small_icons(guids::cfg_small_icons, default_small_icons);
 cfg_bool no_art_image(guids::cfg_no_art_image, default_no_art_image);
 cfg_bool paused_text(guids::cfg_paused_text, default_paused_text);
 cfg_int stop_mode(guids::cfg_stop_mode, static_cast<int64_t>(default_stop_mode));
+cfg_int idle_clear_minutes(guids::cfg_idle_clear_minutes, default_idle_clear_minutes);
 cfg_string details_url(guids::cfg_details_url, default_details_url);
 cfg_string state_url(guids::cfg_state_url, default_state_url);
 cfg_string large_url(guids::cfg_large_url, default_large_url);

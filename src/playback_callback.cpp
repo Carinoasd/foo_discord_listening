@@ -30,6 +30,7 @@ public:
     }
     void on_playback_stop(play_control::t_stop_reason reason) override {
         if (reason != play_control::stop_reason_starting_another) {
+            Guarded("playback callback", [] { presence::OnStop(); });
             Refresh();
             return;
         }
@@ -39,7 +40,10 @@ public:
         fb2k::callLater(1.0, [] { Refresh(); });
     }
     void on_playback_seek(double) override { Refresh(); }
-    void on_playback_pause(bool) override { Refresh(); }
+    void on_playback_pause(bool paused) override {
+        Guarded("playback callback", [paused] { presence::OnPause(paused); });
+        Refresh();
+    }
     void on_playback_edited(metadb_handle_ptr) override { Refresh(); }
     void on_playback_dynamic_info_track(const file_info&) override {
         Guarded("playback callback", [] { presence::OnStreamTitleChanged(); });

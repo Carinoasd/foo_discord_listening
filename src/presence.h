@@ -14,6 +14,9 @@ void Refresh();
 
 /// 播放新曲目時呼叫（重設串流計時）。只能在主執行緒呼叫。
 void OnNewTrack();
+/// 暫停狀態改變、或真正停止（非換曲）時呼叫，用於閒置太久後清除狀態。只能在主執行緒呼叫。
+void OnPause(bool paused);
+void OnStop();
 /// 串流（網路電台）推送新的曲名時呼叫。只能在主執行緒呼叫。
 void OnStreamTitleChanged();
 

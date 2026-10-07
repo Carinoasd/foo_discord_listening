@@ -16,7 +16,7 @@ namespace fdl::art {
 namespace {
 
 constexpr int kMinScore = 90;
-constexpr std::string_view kSize = "front-500";
+constexpr std::string_view kSize = "front-1200";
 
 } // namespace
 

@@ -30,6 +30,8 @@ inline constexpr bool default_small_icons = true;
 inline constexpr bool default_no_art_image = true;
 inline constexpr bool default_paused_text = true;
 inline constexpr StopMode default_stop_mode = StopMode::clear;
+/// 暫停（或「停止時保留」）超過這麼多分鐘就清除狀態；0 表示不清除。避免離開電腦後狀態一直掛著。
+inline constexpr int64_t default_idle_clear_minutes = 15;
 
 // 連結與按鈕：title formatting，結果為空就不送。網址中的空白與非 ASCII 字元會自動編碼。
 inline constexpr char default_details_url[] = "";
@@ -74,6 +76,7 @@ extern cfg_bool small_icons;
 extern cfg_bool no_art_image;
 extern cfg_bool paused_text;
 extern cfg_int stop_mode; // StopMode
+extern cfg_int idle_clear_minutes;
 extern cfg_string details_url;
 extern cfg_string state_url;
 extern cfg_string large_url;

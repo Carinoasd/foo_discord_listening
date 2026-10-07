@@ -21,7 +21,7 @@ class HttpClient;
 LookupResult LookupITunes(HttpClient& http, const TrackInfo& track, std::string_view country);
 
 std::string BuildITunesSearchUrl(std::string_view artist, std::string_view album, std::string_view country);
-/// 從搜尋結果挑出專輯名稱相符（忽略「- Single」「- EP」）且歌手相符的一筆，回傳 600x600 封面網址。
+/// 從搜尋結果挑出專輯名稱相符（忽略「- Single」「- EP」）且歌手相符的一筆，回傳 1000x1000 封面網址。
 std::optional<std::string> PickITunesArtwork(const nlohmann::json& search, std::string_view artist, std::string_view album);
 
 // ---- Last.fm（需要使用者自己的 API key）----

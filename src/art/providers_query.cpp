@@ -65,10 +65,10 @@ std::optional<std::string> PickITunesArtwork(const nlohmann::json& search, std::
             || !ArtistMatches(artist, json::GetString(r, "artistName"))) {
             continue;
         }
-        // 縮圖網址的尺寸可以直接改：100x100bb → 600x600bb。
+        // 縮圖網址的尺寸可以直接改：100x100bb → 1000x1000bb。
         auto url = art;
         if (const auto pos = url.rfind("100x100bb"); pos != std::string::npos) {
-            url.replace(pos, 9, "600x600bb");
+            url.replace(pos, 9, "1000x1000bb");
         }
         return url;
     }
