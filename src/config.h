@@ -44,6 +44,9 @@ inline constexpr char default_button2_url[] = "";
 // 過濾：foobar2000 搜尋語法，空字串表示不過濾。
 inline constexpr char default_filter_query[] = "";
 inline constexpr char default_art_filter_query[] = "";
+// 播放清單過濾：以分號分隔的名稱，支援 * 萬用字元。only 非空時只顯示符合的清單。
+inline constexpr char default_hidden_playlists[] = "";
+inline constexpr char default_only_playlists[] = "";
 
 /// 圖示放在 GitHub repo，以外部網址交給 Discord（不必上傳到 Developer Portal）。
 inline constexpr char icon_base_url[] = "https://raw.githubusercontent.com/Carinoasd/foo_discord_listening/main/assets/";
@@ -86,6 +89,8 @@ extern cfg_string button2_label;
 extern cfg_string button2_url;
 extern cfg_string filter_query;
 extern cfg_string art_filter_query;
+extern cfg_string hidden_playlists;
+extern cfg_string only_playlists;
 extern cfg_bool use_musicbrainz;
 extern cfg_bool use_itunes;
 extern cfg_bool use_lastfm;

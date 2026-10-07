@@ -33,6 +33,8 @@ cfg_string button2_label(guids::cfg_button2_label, default_button2_label);
 cfg_string button2_url(guids::cfg_button2_url, default_button2_url);
 cfg_string filter_query(guids::cfg_filter_query, default_filter_query);
 cfg_string art_filter_query(guids::cfg_art_filter_query, default_art_filter_query);
+cfg_string hidden_playlists(guids::cfg_hidden_playlists, default_hidden_playlists);
+cfg_string only_playlists(guids::cfg_only_playlists, default_only_playlists);
 cfg_bool use_musicbrainz(guids::cfg_use_musicbrainz, default_use_musicbrainz);
 cfg_bool use_itunes(guids::cfg_use_itunes, default_use_itunes);
 cfg_bool use_lastfm(guids::cfg_use_lastfm, default_use_lastfm);

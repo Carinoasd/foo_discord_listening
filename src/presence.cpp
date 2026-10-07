@@ -10,6 +10,7 @@
 #include "config.h"
 #include "discord/client.h"
 #include "log.h"
+#include "playlist_filter.h"
 #include "i18n.h"
 
 #include <chrono>
@@ -164,6 +165,21 @@ discord::Activity BuildFor(const metadb_handle_ptr& track, PlayState state, bool
     return a;
 }
 
+/// 正在播放的清單是否被「隱藏這些清單／只顯示這些清單」排除。
+bool PlayingFromHiddenPlaylist() {
+    const char* hide = config::hidden_playlists.get();
+    const char* only = config::only_playlists.get();
+    if (!*hide && !*only) {
+        return false;
+    }
+    auto pm = playlist_manager::get();
+    pfc::string8 name;
+    if (const auto index = pm->get_playing_playlist(); index != SIZE_MAX) {
+        pm->playlist_get_name(index, name);
+    }
+    return playlist_filter::IsHidden(name.c_str(), hide, only);
+}
+
 /// 停止後保留狀態時使用的最後一首曲目。
 metadb_handle_ptr g_last_track;
 
@@ -195,7 +211,7 @@ std::optional<discord::Activity> Build() {
     }
     g_last_track = track;
     // 符合過濾條件的曲目（例如不想公開的專輯）完全不顯示（上游 #68）。
-    if (Matches(config::filter_query.get(), track)) {
+    if (Matches(config::filter_query.get(), track) || PlayingFromHiddenPlaylist()) {
         return std::nullopt;
     }
 
