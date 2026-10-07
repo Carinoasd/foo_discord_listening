@@ -9,6 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.0] - 2026-10-07
+
+### Added
+
+- **更多封面來源，依序嘗試。** 手動指定 → MusicBrainz → iTunes → Last.fm → 上傳本機封面。某個來源暫時連不上時改試下一個，稍後再重試。
+  *More album art sources, tried in order: hand-set, MusicBrainz, iTunes, Last.fm, local upload. A source that is temporarily unreachable is skipped and retried later.*
+  - **iTunes**：免申請 key，日本動畫、遊戲音樂收錄齊全；比對時忽略「- Single」「- EP」與全形／半形差異。
+    *iTunes, no key needed, strong on Japanese anime and game music.*
+  - **Last.fm**：使用你自己的 API key。key 錯誤或限流時不會把專輯記成「沒有封面」。
+    *Last.fm with your own API key. Key errors and rate limits are not cached as "no art".*
+  - **MusicBrainz 鏡像站**（上游 #63），以及專輯層級沒有封面時改找同專輯其他版本（上游 #110）。
+    *A MusicBrainz mirror setting, and a fallback to other releases of the same album.*
+- **手動指定封面。** 右鍵 Utilities > 指定 Discord 專輯封面，以專輯為單位指定圖片網址，優先於所有自動來源（上游 #96）。
+  *Set album art by hand from the context menu. It takes priority over every automatic source.*
+- **播放／暫停／停止小圖示與無封面預設圖。** 原創圖示，以外部網址提供，不需要上傳到 Discord。
+  *Play / pause / stop icons and a placeholder for tracks without art, all original artwork.*
+- **停止時保留狀態**（上游 #20）。
+  *Optionally keep showing the last song after stopping.*
+- **連結與按鈕。** 第一行、第二行、封面可設定點擊後開啟的網址；最多兩個按鈕。
+  *Links on the text and album art, and up to two buttons.*
+- **隱私過濾。** 符合條件的曲目不顯示狀態（上游 #68），或不抓封面（上游 #93）。
+  *Hide the status, or skip album art, for tracks matching a search query.*
+- **繁體中文介面。** Windows 介面為繁體中文時，設定頁、選單與狀態訊息自動顯示中文。
+  *A Traditional Chinese UI, used automatically on Traditional Chinese Windows.*
+- **從 foo_discord_rich 匯入設定。** 第一次啟動時沿用你改過的值；會避開 foo_discord_rich 2.0.2 的 GUID 衝突。
+  *Settings you changed in foo_discord_rich are picked up on first start.*
+- **更新檢查。** 每天一次，有新版時在 Console 與設定頁提示；可在 Advanced Preferences 關閉。
+  *A daily update check, which can be turned off.*
+- 設定頁拆成「Discord Listening」「專輯封面」「連結與過濾」三頁。
+  *Preferences are split into three pages.*
+
+### Fixed
+
+- 連線失敗時沒有留下任何紀錄。現在會寫到 Console，同樣的錯誤只記一次。
+  *Connection failures were not logged at all.*
+- 時間戳因取整跨秒差 1 秒時會多送一次更新，浪費 Discord 的限流額度。
+  *A one-second rounding difference no longer costs an extra update.*
+
+### Testing
+
+- 新增以假的 Discord 伺服器進行的整合測試（重連、限流、Discord 卡住時的關閉），並在 CI 執行。
+  *Integration tests against a fake Discord server, run in CI.*
+- 已在 foobar2000 2.26 x64 與 x86 上實機驗證所有功能。
+  *Every feature was verified on foobar2000 2.26 x64 and x86.*
+
+---
+
 ## [0.1.0] - 2026-10-07
 
 第一個版本。從零重寫，參考 foo_discord_rich 的 issue 紀錄設計。
@@ -52,4 +99,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - 上傳程式輸出較多時會卡住，錯誤訊息也被當成封面網址（#79）。
   *The uploader could deadlock on large output, and error text was used as an art URL.*
 
+[0.2.0]: https://github.com/Carinoasd/foo_discord_listening/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Carinoasd/foo_discord_listening/releases/tag/v0.1.0

@@ -53,6 +53,9 @@ constexpr Entry kStrings[] = {
 static_assert(std::size(kStrings) == static_cast<size_t>(StringId::count_), "kStrings 與 StringId 數量不一致");
 
 bool DetectTraditionalChinese() {
+#ifdef FDL_FORCE_ENGLISH
+    return false;
+#endif
     const LANGID lang = GetUserDefaultUILanguage();
     if (PRIMARYLANGID(lang) != LANG_CHINESE) {
         return false;

@@ -34,11 +34,26 @@
 - [ ] 歌名含 emoji 或超過 128 字：正常顯示，以刪節號截斷，Console 沒有 Discord 拒絕的訊息。
 - [ ] 改 Line 1/2/3 的格式並 Apply：立刻生效。
 
+## 圖示與停止
+
+- [ ] 播放／暫停時封面角落顯示對應的小圖示；沒有封面的曲目顯示預設圖。
+- [ ] 「停止時：保留最後一首歌」：停止後仍顯示最後一首，第一行加上「(已停止)」，顯示停止圖示，沒有進度條。
+- [ ] 類型改 Playing／Watching、狀態列改顯示第二行：Discord 依設定顯示。
+
+## 連結、按鈕與過濾
+
+- [ ] 第一行連結與按鈕使用 `https://www.youtube.com/results?search_query=[%artist% ]%title%`：送出的網址空白與中日文已編碼，Discord 沒有拒絕（除錯紀錄沒有 ERROR）。
+- [ ] 「不顯示的曲目」設為 `%album% HAS 某字`：播放符合的曲目時狀態清除。
+- [ ] 「不抓封面的曲目」：符合的曲目顯示預設圖，不送出封面查詢。
+
 ## 封面
 
 - [ ] 有 `MUSICBRAINZ_ALBUMID` 標籤的專輯：顯示正確封面。
 - [ ] 沒有 MBID 但很知名的專輯（例如 The Beatles - Abbey Road）：數秒內顯示正確封面。
 - [ ] 沒有專輯標籤的檔案：不顯示封面，也不送出查詢（Console 沒有相關錯誤）。
+- [ ] MusicBrainz 伺服器設成連不上的位址（例如 `https://127.0.0.1:9`）：除錯紀錄顯示稍後重試，並改由 iTunes 找到封面。
+- [ ] 右鍵 **Utilities > 指定 Discord 專輯封面...**：對話框顯示專輯名稱；填入網址後狀態立刻改用該圖；「清除封面快取」後手動指定的仍保留。
+- [ ] Last.fm 填入錯誤的 key：Console 顯示 Last.fm 錯誤，該專輯不會被記成「沒有封面」。
 - [ ] 設定頁的快取數量會增加；按 *Clear art cache* 後歸零，目前歌曲重新抓取。
 - [ ] 對曲目按右鍵 **Utilities > Re-fetch Discord album art**：Console 顯示已清除的筆數。
 - [ ] 重新啟動 foobar2000：快取仍在（不重新查詢），設定都沒有被還原。
@@ -51,9 +66,24 @@
 - [ ] 把指令改成不存在的程式：Console 顯示上傳失敗並稍後重試，不會把錯誤訊息當成封面。
 - [ ] `%TEMP%` 中沒有殘留的 `fdl-art-*.jpg`。
 
+## 介面
+
+- [ ] Windows 介面為繁體中文時，三個設定頁、手動指定封面對話框、選單、狀態都是中文，且沒有文字被裁掉。
+- [ ] foobar2000 深色模式下三個設定頁都正確變色。
+- [ ] 修改任一欄位後 Apply 變成可按，按下後立即生效；Reset page 恢復預設值。
+
+## 匯入與更新
+
+- [ ] 全新 profile 的 `configuration\foo_discord_rich.dll.cfg` 有改過的值：第一次啟動後被沿用，foo_discord_rich 的預設值不會蓋掉本元件的預設；第二次啟動不再匯入。
+- [ ] 更新檢查：設定頁與 Console 在有新版時提示；Advanced Preferences 關閉後不再連線。
+
 ## 除錯紀錄
 
 - [ ] Advanced Preferences 開啟 *Write debug log*：profile 下出現 `foo_discord_listening\debug.log`，內含送出與收到的 JSON；關閉後不再寫入。
+
+## 32 位元
+
+- [ ] 在 32 位元的 foobar2000 上安裝：元件載入、連上 Discord、抓到封面，關閉正常。
 
 ## 結束
 

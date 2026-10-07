@@ -56,6 +56,12 @@ target_compile_definitions(foo_discord_listening PRIVATE
     FDL_VERSION_PATCH=${PROJECT_VERSION_PATCH}
 )
 target_compile_options(foo_discord_listening PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4 /utf-8 /permissive- /fp:fast>)
+
+# 只用於製作英文截圖：不論 Windows 介面語言，一律使用英文。發佈版不要開啟。
+option(FDL_FORCE_ENGLISH "Always use the English UI (for screenshots)" OFF)
+if(FDL_FORCE_ENGLISH)
+    target_compile_definitions(foo_discord_listening PRIVATE FDL_FORCE_ENGLISH)
+endif()
 target_link_libraries(foo_discord_listening PRIVATE fb2k_sdk nlohmann_json::nlohmann_json)
 target_precompile_headers(foo_discord_listening PRIVATE src/stdafx.h)
 

@@ -11,6 +11,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 #include "dialogs_en.rc"
 
+#ifndef FDL_FORCE_ENGLISH
 // 繁體中文：Windows 會依介面語言自動選用。香港、澳門也使用同一份。
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
 #include "dialogs_zh_tw.rc"
@@ -18,6 +19,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_HONGKONG
 #include "dialogs_zh_tw.rc"
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_MACAU
 #include "dialogs_zh_tw.rc"
+#endif
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
