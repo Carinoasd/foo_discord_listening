@@ -10,6 +10,7 @@
 #include "config.h"
 #include "discord/client.h"
 #include "log.h"
+#include "strings.h"
 
 #include <chrono>
 #include <map>
@@ -36,33 +37,40 @@ constexpr char kArtAlbum[] = "[%album%]";
 constexpr char kReleaseMbid[] = "$if3($meta(MUSICBRAINZ_ALBUMID),$meta(MUSICBRAINZ ALBUM ID))";
 constexpr char kReleaseGroupMbid[] = "$if3($meta(MUSICBRAINZ_RELEASEGROUPID),$meta(MUSICBRAINZ RELEASE GROUP ID))";
 
-/// 組出封面請求。兩個 key 都會計算，是否使用由 ResolveArt 依設定決定。
-art::ArtRequest BuildArtRequest(const metadb_handle_ptr& track, bool now_playing) {
+std::string AlbumKey(const metadb_handle_ptr& track, bool now_playing) {
+    return FormatTitle(track, config::upload_key_format.get(), now_playing);
+}
+
+/// 依設定組出封面來源鏈。所有來源的 key 都會算出來；enabled_only 為 false 時（清除快取用）不看開關。
+art::ArtRequest BuildArtRequest(const metadb_handle_ptr& track, bool now_playing, bool enabled_only) {
+    using art::SourceKind;
     art::ArtRequest req;
     req.track = track;
     req.info.artist = FormatTitle(track, kArtArtist, now_playing);
     req.info.album = FormatTitle(track, kArtAlbum, now_playing);
     req.info.release_mbid = FormatTitle(track, kReleaseMbid, now_playing);
     req.info.release_group_mbid = FormatTitle(track, kReleaseGroupMbid, now_playing);
-    req.musicbrainz_key = art::Service::MusicBrainzKey(req.info);
-    if (const auto key = FormatTitle(track, config::upload_key_format.get(), now_playing); !key.empty()) {
-        req.upload_key = "upload:" + key;
-    }
+    req.musicbrainz_server = config::musicbrainz_server.get().c_str();
+    req.itunes_country = config::itunes_country.get().c_str();
+    req.lastfm_api_key = config::lastfm_api_key.get().c_str();
+    req.upload_command = config::upload_command.get().c_str();
+
+    const auto album_key = AlbumKey(track, now_playing);
+    auto add = [&](SourceKind kind, bool enabled, std::string key) {
+        if ((enabled || !enabled_only) && !key.empty()) {
+            req.steps.push_back({ kind, std::move(key) });
+        }
+    };
+    add(SourceKind::manual, true, album_key.empty() ? std::string{} : "manual:" + album_key);
+    add(SourceKind::musicbrainz, config::use_musicbrainz, art::Service::MusicBrainzKey(req.info));
+    add(SourceKind::itunes, config::use_itunes, art::Service::SearchKey("itunes:" + req.itunes_country + ":", req.info));
+    add(SourceKind::lastfm, config::use_lastfm && !req.lastfm_api_key.empty(), art::Service::SearchKey("lastfm:", req.info));
+    add(SourceKind::upload, config::use_upload && !req.upload_command.empty(), album_key.empty() ? std::string{} : "upload:" + album_key);
     return req;
 }
 
 std::optional<std::string> ResolveArt(const metadb_handle_ptr& track) {
-    const auto source = config::GetArtSource();
-    auto req = BuildArtRequest(track, true);
-    if (source == config::ArtSource::upload) {
-        req.musicbrainz_key.clear();
-    }
-    if (source != config::ArtSource::musicbrainz && !config::upload_command.get().is_empty()) {
-        req.upload_command = config::upload_command.get().c_str();
-    } else {
-        req.upload_key.clear();
-    }
-    return art::Service::Get().Resolve(std::move(req));
+    return art::Service::Get().Resolve(BuildArtRequest(track, true, true));
 }
 
 /// 串流目前這首歌開始的時間（電台換歌時更新），非串流時不使用。
@@ -143,14 +151,14 @@ discord::Activity BuildFor(const metadb_handle_ptr& track, PlayState state, bool
 
     if (config::small_icons) {
         switch (state) {
-        case PlayState::playing: a.small_image = IconUrl("playing"); a.small_text = "Playing"; break;
-        case PlayState::paused: a.small_image = IconUrl("paused"); a.small_text = "Paused"; break;
-        case PlayState::stopped: a.small_image = IconUrl("stopped"); a.small_text = "Stopped"; break;
+        case PlayState::playing: a.small_image = IconUrl("playing"); a.small_text = Tr(StringId::icon_playing); break;
+        case PlayState::paused: a.small_image = IconUrl("paused"); a.small_text = Tr(StringId::icon_paused); break;
+        case PlayState::stopped: a.small_image = IconUrl("stopped"); a.small_text = Tr(StringId::icon_stopped); break;
         }
     }
     // 小圖示只出現在個人資料卡上；成員清單只顯示一行文字，所以也可以把狀態寫進第一行。
     if (config::paused_text && state != PlayState::playing) {
-        const char* label = state == PlayState::paused ? "Paused" : "Stopped";
+        const char* label = Tr(state == PlayState::paused ? StringId::icon_paused : StringId::icon_stopped);
         a.details = a.details.empty() ? std::string(label) : a.details + " (" + label + ")";
     }
     return a;
@@ -201,18 +209,30 @@ std::optional<discord::Activity> Build() {
 
 } // namespace
 
+namespace {
+
+bool IsNowPlaying(const metadb_handle_ptr& track) {
+    metadb_handle_ptr playing;
+    return playback_control::get()->get_now_playing(playing) && playing == track;
+}
+
+} // namespace
+
 std::vector<std::string> ArtKeysFor(const metadb_handle_ptr& track) {
     // 正在播放的曲目要用與 ResolveArt 相同的方式計算（含串流的動態資訊），才清得到實際使用的快取。
-    metadb_handle_ptr playing;
-    const bool now_playing = playback_control::get()->get_now_playing(playing) && playing == track;
-    const auto req = BuildArtRequest(track, now_playing);
+    const auto req = BuildArtRequest(track, IsNowPlaying(track), false);
     std::vector<std::string> keys;
-    for (const auto& key : { req.musicbrainz_key, req.upload_key }) {
-        if (!key.empty()) {
-            keys.push_back(key);
+    for (const auto& step : req.steps) {
+        if (step.kind != art::SourceKind::manual) { // 手動指定的封面不因「重新抓取」而消失
+            keys.push_back(step.key);
         }
     }
     return keys;
+}
+
+std::string ManualArtKeyFor(const metadb_handle_ptr& track) {
+    const auto key = AlbumKey(track, IsNowPlaying(track));
+    return key.empty() ? std::string{} : "manual:" + key;
 }
 
 void OnNewTrack() {

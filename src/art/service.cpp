@@ -7,6 +7,7 @@
 #include "art/service.h"
 
 #include "art/http.h"
+#include "art/providers.h"
 #include "art/local_art.h"
 #include "art/uploader.h"
 #include "json_util.h"
@@ -27,6 +28,8 @@ constexpr auto kRetryAfterError = std::chrono::minutes(10);
 constexpr auto kDebounce = std::chrono::milliseconds(1500);
 // 上傳前縮圖的最長邊。Discord 顯示的大圖不需要更大。
 constexpr unsigned kUploadSize = 512;
+
+constexpr std::string_view kManualPrefix = "manual:";
 
 int64_t NowSeconds() {
     using namespace std::chrono;
@@ -79,10 +82,14 @@ std::string Service::MusicBrainzKey(const TrackInfo& track) {
     if (IsMbid(track.release_group_mbid)) {
         return "release-group:" + AsciiLower(track.release_group_mbid);
     }
-    if (!track.artist.empty() && !track.album.empty()) {
-        return "search:" + NormalizeTitle(track.artist) + "|" + NormalizeTitle(track.album);
+    return SearchKey("search:", track);
+}
+
+std::string Service::SearchKey(std::string_view prefix, const TrackInfo& track) {
+    if (track.artist.empty() || track.album.empty()) {
+        return {};
     }
-    return {};
+    return std::string(prefix) + NormalizeTitle(track.artist) + "|" + NormalizeTitle(track.album);
 }
 
 Service::KeyState Service::StateLocked(const std::string& key, std::string* url) const {
@@ -99,6 +106,10 @@ Service::KeyState Service::StateLocked(const std::string& key, std::string* url)
             return KeyState::none;
         }
     }
+    // 手動指定的來源沒有「去查」這回事：沒設定就是沒有。
+    if (key.starts_with(kManualPrefix)) {
+        return KeyState::none;
+    }
     if (const auto it = m_retry_after.find(key); it != m_retry_after.end() && std::chrono::steady_clock::now() < it->second) {
         return KeyState::waiting;
     }
@@ -108,17 +119,22 @@ Service::KeyState Service::StateLocked(const std::string& key, std::string* url)
 std::optional<std::string> Service::Resolve(ArtRequest request) {
     {
         std::scoped_lock lock(m_mutex);
-        std::string url;
-        const auto mb = StateLocked(request.musicbrainz_key, &url);
-        if (mb == KeyState::found) {
-            return url;
+        bool need_fetch = false;
+        for (const auto& step : request.steps) {
+            std::string url;
+            switch (StateLocked(step.key, &url)) {
+            case KeyState::found:
+                // 已有結果就直接用；即使更前面的來源還沒查過，也不為了換圖再發請求。
+                return url;
+            case KeyState::unknown:
+                need_fetch = true;
+                break;
+            case KeyState::none:
+            case KeyState::waiting:
+                break;
+            }
         }
-        const auto up = request.upload_command.empty() ? KeyState::none : StateLocked(request.upload_key, &url);
-        if (up == KeyState::found) {
-            return url;
-        }
-        if (mb != KeyState::unknown && up != KeyState::unknown) {
-            // 兩種來源都已確定沒有封面或正在等待重試。
+        if (!need_fetch) {
             return std::nullopt;
         }
         m_pending = std::move(request);
@@ -127,10 +143,31 @@ std::optional<std::string> Service::Resolve(ArtRequest request) {
     return std::nullopt;
 }
 
+void Service::SetManual(const std::string& key, const std::string& url) {
+    {
+        std::scoped_lock lock(m_mutex);
+        if (url.empty()) {
+            m_cache.erase(key);
+        } else {
+            m_cache[key] = { url, NowSeconds() };
+        }
+        ++m_cache_version;
+    }
+    Save();
+}
+
+std::optional<std::string> Service::GetManual(const std::string& key) const {
+    std::scoped_lock lock(m_mutex);
+    if (const auto it = m_cache.find(key); it != m_cache.end() && !it->second.url.empty()) {
+        return it->second.url;
+    }
+    return std::nullopt;
+}
+
 void Service::ClearAll() {
     {
         std::scoped_lock lock(m_mutex);
-        m_cache.clear();
+        std::erase_if(m_cache, [](const auto& kv) { return !kv.first.starts_with(kManualPrefix); });
         m_retry_after.clear();
         ++m_cache_version;
     }
@@ -178,54 +215,65 @@ void Service::Run(std::stop_token stop) {
     }
 }
 
-void Service::Process(const ArtRequest& request) {
-    DebugLog("art lookup: musicbrainz_key=\"{}\" upload_key=\"{}\"", request.musicbrainz_key, request.upload_key);
-    KeyState mb;
-    KeyState up;
-    {
-        std::scoped_lock lock(m_mutex);
-        std::string url;
-        mb = StateLocked(request.musicbrainz_key, &url);
-        up = request.upload_command.empty() ? KeyState::none : StateLocked(request.upload_key, &url);
+LookupResult Service::Fetch(const ArtRequest& request, const ArtStep& step) {
+    switch (step.kind) {
+    case SourceKind::musicbrainz:
+        return LookupCoverArt(*m_http, request.info, request.musicbrainz_server);
+    case SourceKind::itunes:
+        return LookupITunes(*m_http, request.info, request.itunes_country);
+    case SourceKind::lastfm:
+        return LookupLastFm(*m_http, request.info, request.lastfm_api_key);
+    case SourceKind::upload: {
+        const auto image = ExportCoverArt(request.track, kUploadSize, m_abort);
+        if (!image) {
+            return { LookupStatus::not_found, {} };
+        }
+        const auto result = RunUploader(request.upload_command, *image, m_cancel);
+        std::error_code ec;
+        std::filesystem::remove(*image, ec);
+        if (result.url.empty()) {
+            if (!m_cancel) {
+                Log("cover art upload failed: {}", result.error);
+            }
+            return { LookupStatus::network_error, {} };
+        }
+        return { LookupStatus::found, result.url };
     }
+    case SourceKind::manual:
+        break;
+    }
+    return { LookupStatus::not_found, {} };
+}
 
-    if (mb == KeyState::unknown) {
-        const auto result = LookupCoverArt(*m_http, request.info);
+void Service::Process(const ArtRequest& request) {
+    for (const auto& step : request.steps) {
+        KeyState state;
+        {
+            std::scoped_lock lock(m_mutex);
+            std::string url;
+            state = StateLocked(step.key, &url);
+        }
+        if (state == KeyState::found) {
+            return;
+        }
+        if (state != KeyState::unknown) {
+            continue; // 確定沒有，或暫時連不上而在等待重試：試下一個來源
+        }
+        DebugLog("art lookup: {}", step.key);
+        const auto result = Fetch(request, step);
         if (m_cancel) {
             return;
         }
         if (result.status == LookupStatus::network_error) {
-            DeferRetry(request.musicbrainz_key, "MusicBrainz request failed");
+            DeferRetry(step.key, "temporary error");
+            continue;
+        }
+        const bool found = result.status == LookupStatus::found;
+        StoreResult(step.key, found ? std::optional(result.url) : std::nullopt);
+        if (found) {
             return;
         }
-        StoreResult(request.musicbrainz_key, result.status == LookupStatus::found ? std::optional(result.url) : std::nullopt);
-        if (result.status == LookupStatus::found) {
-            return;
-        }
-    } else if (mb == KeyState::found) {
-        return;
     }
-    // MusicBrainz 確定沒有封面，或暫時連不上（waiting）時，若有設定上傳就改用上傳。
-
-    if (up != KeyState::unknown) {
-        return;
-    }
-    const auto image = ExportCoverArt(request.track, kUploadSize, m_abort);
-    if (!image) {
-        StoreResult(request.upload_key, std::nullopt);
-        return;
-    }
-    const auto result = RunUploader(request.upload_command, *image, m_cancel);
-    std::error_code ec;
-    std::filesystem::remove(*image, ec);
-    if (m_cancel) {
-        return;
-    }
-    if (result.url.empty()) {
-        DeferRetry(request.upload_key, "upload failed: " + result.error);
-        return;
-    }
-    StoreResult(request.upload_key, result.url);
 }
 
 void Service::StoreResult(const std::string& key, std::optional<std::string> url) {

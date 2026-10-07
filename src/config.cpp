@@ -32,7 +32,13 @@ cfg_string button2_label(guids::cfg_button2_label, default_button2_label);
 cfg_string button2_url(guids::cfg_button2_url, default_button2_url);
 cfg_string filter_query(guids::cfg_filter_query, default_filter_query);
 cfg_string art_filter_query(guids::cfg_art_filter_query, default_art_filter_query);
-cfg_int art_source(guids::cfg_art_source, static_cast<int64_t>(default_art_source));
+cfg_bool use_musicbrainz(guids::cfg_use_musicbrainz, default_use_musicbrainz);
+cfg_bool use_itunes(guids::cfg_use_itunes, default_use_itunes);
+cfg_bool use_lastfm(guids::cfg_use_lastfm, default_use_lastfm);
+cfg_string lastfm_api_key(guids::cfg_lastfm_api_key, default_lastfm_api_key);
+cfg_bool use_upload(guids::cfg_use_upload, default_use_upload);
+cfg_string musicbrainz_server(guids::cfg_musicbrainz_server, default_musicbrainz_server);
+cfg_string itunes_country(guids::cfg_itunes_country, default_itunes_country);
 cfg_string upload_command(guids::cfg_upload_command, default_upload_command);
 cfg_string upload_key_format(guids::cfg_upload_key_format, default_upload_key_format);
 
@@ -54,11 +60,6 @@ int64_t StatusDisplay() {
 PauseMode GetPauseMode() {
     const auto v = static_cast<PauseMode>(pause_mode.get());
     return v == PauseMode::clear || v == PauseMode::keep ? v : default_pause_mode;
-}
-
-ArtSource GetArtSource() {
-    const auto v = art_source.get();
-    return v >= 0 && v <= 2 ? static_cast<ArtSource>(v) : default_art_source;
 }
 
 StopMode GetStopMode() {

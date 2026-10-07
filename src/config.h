@@ -16,12 +16,6 @@ enum class StopMode : int64_t {
     keep = 1,  ///< 停止時保留最後一首的資訊，顯示停止圖示
 };
 
-enum class ArtSource : int64_t {
-    musicbrainz = 0,            ///< 只查 MusicBrainz / Cover Art Archive
-    upload = 1,                 ///< 只上傳本機封面
-    musicbrainz_then_upload = 2, ///< 先查 MusicBrainz，找不到再上傳
-};
-
 inline constexpr bool default_enabled = true;
 inline constexpr char default_app_id[] = "";
 inline constexpr int64_t default_activity_type = 2; // listening
@@ -51,9 +45,16 @@ inline constexpr char default_art_filter_query[] = "";
 
 /// 圖示放在 GitHub repo，以外部網址交給 Discord（不必上傳到 Developer Portal）。
 inline constexpr char icon_base_url[] = "https://raw.githubusercontent.com/Carinoasd/foo_discord_listening/main/assets/";
-inline constexpr ArtSource default_art_source = ArtSource::musicbrainz;
+// 封面來源依序嘗試：手動指定 → MusicBrainz → iTunes → Last.fm → 上傳本機封面。
+inline constexpr bool default_use_musicbrainz = true;
+inline constexpr bool default_use_itunes = true;
+inline constexpr bool default_use_lastfm = false;
+inline constexpr char default_lastfm_api_key[] = "";
+inline constexpr bool default_use_upload = false;
+inline constexpr char default_musicbrainz_server[] = ""; // 空字串 = https://musicbrainz.org
+inline constexpr char default_itunes_country[] = "JP";   // 日本商店對動畫、遊戲音樂收錄最齊全
 inline constexpr char default_upload_command[] = "";
-// 同一張專輯只上傳一次；沒有專輯名稱的曲目各自上傳。
+// 「同一張專輯」的判定：上傳本機封面與手動指定封面都以此為單位。沒有專輯名稱的曲目各自獨立。
 inline constexpr char default_upload_key_format[] = "$if([%album%],[%album artist%]|[%album%],%path%)";
 
 /// 內建的 Discord 應用程式 ID；使用者沒填時採用。
@@ -82,7 +83,13 @@ extern cfg_string button2_label;
 extern cfg_string button2_url;
 extern cfg_string filter_query;
 extern cfg_string art_filter_query;
-extern cfg_int art_source; // ArtSource
+extern cfg_bool use_musicbrainz;
+extern cfg_bool use_itunes;
+extern cfg_bool use_lastfm;
+extern cfg_string lastfm_api_key;
+extern cfg_bool use_upload;
+extern cfg_string musicbrainz_server;
+extern cfg_string itunes_country;
 extern cfg_string upload_command;
 extern cfg_string upload_key_format;
 
@@ -93,7 +100,6 @@ std::string EffectiveAppId();
 int64_t ActivityType();
 int64_t StatusDisplay();
 PauseMode GetPauseMode();
-ArtSource GetArtSource();
 StopMode GetStopMode();
 
 } // namespace fdl::config

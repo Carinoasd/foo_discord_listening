@@ -19,5 +19,7 @@ void OnStreamTitleChanged();
 
 /// 曲目在封面快取中可能使用的 key（MusicBrainz 與上傳），用於清除單一曲目的快取。
 std::vector<std::string> ArtKeysFor(const metadb_handle_ptr& track);
+/// 手動指定封面用的 key（以「同一張專輯」為單位）。曲目沒有專輯資訊時回傳空字串。
+std::string ManualArtKeyFor(const metadb_handle_ptr& track);
 
 } // namespace fdl::presence

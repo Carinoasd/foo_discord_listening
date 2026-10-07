@@ -9,6 +9,7 @@
 #include "discord/ipc_connection.h"
 #include "json_util.h"
 #include "log.h"
+#include "strings.h"
 
 #include <chrono>
 #include <deque>
@@ -135,7 +136,7 @@ void Client::Run(std::stop_token stop) {
             }
             if (client_id.empty()) {
                 connected_id.clear();
-                set_status(ConnectionState::disabled, "Disabled");
+                set_status(ConnectionState::disabled, Tr(StringId::conn_disabled));
                 continue;
             }
 
@@ -144,7 +145,7 @@ void Client::Run(std::stop_token stop) {
                 if (now < next_retry) {
                     continue;
                 }
-                set_status(ConnectionState::connecting, "Connecting...");
+                set_status(ConnectionState::connecting, Tr(StringId::conn_connecting));
                 std::string error;
                 if (!conn.Open(client_id, error, stop)) {
                     set_status(ConnectionState::error, error);
@@ -153,7 +154,7 @@ void Client::Run(std::stop_token stop) {
                     continue;
                 }
                 Log("connected to Discord");
-                set_status(ConnectionState::connected, "Connected");
+                set_status(ConnectionState::connected, Tr(StringId::conn_connected));
                 connected_id = client_id;
                 retry_delay = kMinRetry;
                 sent_any = false;
@@ -171,7 +172,7 @@ void Client::Run(std::stop_token stop) {
             }
             if (!conn.IsOpen()) {
                 Log("disconnected from Discord");
-                set_status(ConnectionState::error, "Disconnected");
+                set_status(ConnectionState::error, Tr(StringId::conn_disconnected));
                 next_retry = Clock::now() + retry_delay;
                 continue;
             }

@@ -59,8 +59,34 @@ std::string EscapeLucene(std::string_view text) {
     return out;
 }
 
+/// 全形英數符號（U+FF01–FF5E）轉半形、全形空白轉空白、波浪號「〜」轉「~」。
+/// 日本的發行資料常混用全形與半形，例如「～」與「〜」、「ＡＢＣ」與「ABC」。
+std::string FoldWidth(std::string_view text) {
+    std::string out;
+    out.reserve(text.size());
+    for (size_t i = 0; i < text.size();) {
+        const auto c0 = static_cast<unsigned char>(text[i]);
+        if (c0 == 0xE3 && i + 2 < text.size()) {
+            const uint32_t cp = ((c0 & 0x0F) << 12) | ((static_cast<unsigned char>(text[i + 1]) & 0x3F) << 6) | (static_cast<unsigned char>(text[i + 2]) & 0x3F);
+            if (cp == 0x3000) { out += ' '; i += 3; continue; }
+            if (cp == 0x301C) { out += '~'; i += 3; continue; }
+        }
+        if (c0 == 0xEF && i + 2 < text.size()) {
+            const uint32_t cp = ((c0 & 0x0F) << 12) | ((static_cast<unsigned char>(text[i + 1]) & 0x3F) << 6) | (static_cast<unsigned char>(text[i + 2]) & 0x3F);
+            if (cp >= 0xFF01 && cp <= 0xFF5E) {
+                out += static_cast<char>(cp - 0xFEE0);
+                i += 3;
+                continue;
+            }
+        }
+        out += text[i];
+        ++i;
+    }
+    return out;
+}
+
 std::string NormalizeTitle(std::string_view text) {
-    std::string lower = AsciiLower(text);
+    std::string lower = AsciiLower(FoldWidth(text));
     // 把常見的全形或排版用符號換成 ASCII，讓「Don’t」和「Don't」視為相同。
     static const std::pair<std::string_view, std::string_view> kReplace[] = {
         { "\xE2\x80\x98", "'" }, { "\xE2\x80\x99", "'" }, { "\xE2\x80\x9C", "\"" }, { "\xE2\x80\x9D", "\"" },
@@ -87,9 +113,13 @@ std::string NormalizeTitle(std::string_view text) {
     return out;
 }
 
-std::string BuildReleaseGroupSearchUrl(std::string_view artist, std::string_view album) {
+std::string BuildReleaseGroupSearchUrl(std::string_view server, std::string_view artist, std::string_view album) {
+    std::string base(server.empty() ? std::string_view("https://musicbrainz.org") : server);
+    while (!base.empty() && base.back() == '/') {
+        base.pop_back();
+    }
     const std::string query = "releasegroup:\"" + EscapeLucene(album) + "\" AND artist:\"" + EscapeLucene(artist) + "\"";
-    return "https://musicbrainz.org/ws/2/release-group/?fmt=json&limit=10&query=" + UrlEncode(query);
+    return base + "/ws/2/release-group/?fmt=json&limit=10&query=" + UrlEncode(query);
 }
 
 std::optional<std::string> PickReleaseGroup(const nlohmann::json& search, std::string_view album) {

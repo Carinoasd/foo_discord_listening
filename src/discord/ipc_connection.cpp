@@ -6,6 +6,7 @@
 
 #include "discord/ipc_connection.h"
 #include "json_util.h"
+#include "strings.h"
 
 #include <chrono>
 #include <thread>
@@ -47,7 +48,7 @@ bool IpcConnection::Open(const std::string& client_id, std::string& error, std::
         m_pipe = CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     }
     if (!IsOpen()) {
-        error = "Discord is not running";
+        error = Tr(StringId::conn_not_running);
         return false;
     }
 

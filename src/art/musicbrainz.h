@@ -33,7 +33,8 @@ struct LookupResult {
 };
 
 /// 查詢 Cover Art Archive 的封面網址。阻塞，只能在背景執行緒呼叫。
-LookupResult LookupCoverArt(HttpClient& http, const TrackInfo& track);
+/// server 為 MusicBrainz 伺服器（可用鏡像站），空字串表示 https://musicbrainz.org。
+LookupResult LookupCoverArt(HttpClient& http, const TrackInfo& track, std::string_view server = {});
 
 // 以下為可單獨測試的純函式（實作於 musicbrainz_query.cpp）。
 
@@ -46,7 +47,7 @@ bool IsMbid(std::string_view text);
 std::string EscapeLucene(std::string_view text);
 /// 用於比對標題：轉小寫、統一引號與破折號、壓縮空白。
 std::string NormalizeTitle(std::string_view text);
-std::string BuildReleaseGroupSearchUrl(std::string_view artist, std::string_view album);
+std::string BuildReleaseGroupSearchUrl(std::string_view server, std::string_view artist, std::string_view album);
 /// 從 release-group 搜尋結果挑出可信的一筆：score 夠高且標題相符。找不到回傳 nullopt。
 std::optional<std::string> PickReleaseGroup(const nlohmann::json& search, std::string_view album);
 /// Cover Art Archive 的穩定網址（Discord 會自行跟隨轉址，不要存轉址後的 archive.org 節點網址）。

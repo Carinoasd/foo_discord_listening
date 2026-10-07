@@ -42,12 +42,18 @@ int main() {
     CHECK(NormalizeTitle("東京事変") == "東京事変");
 
     // 搜尋網址必須完整編碼
-    const auto url = BuildReleaseGroupSearchUrl("The Beatles", "Abbey Road");
+    const auto url = BuildReleaseGroupSearchUrl("", "The Beatles", "Abbey Road");
     CHECK(url.starts_with("https://musicbrainz.org/ws/2/release-group/?fmt=json&limit=10&query="));
     CHECK(url.find(' ') == std::string::npos);
     CHECK(url.find('"') == std::string::npos);
     CHECK(url.find("releasegroup%3A%22Abbey%20Road%22%20AND%20artist%3A%22The%20Beatles%22") != std::string::npos);
     CHECK(UrlEncode("東") == "%E6%9D%B1");
+    // 自訂伺服器（鏡像站），結尾斜線會被去掉
+    CHECK(BuildReleaseGroupSearchUrl("https://mb.example.org/", "A", "B").starts_with("https://mb.example.org/ws/2/release-group/?"));
+
+    // 全形與半形、兩種波浪號視為相同
+    CHECK(NormalizeTitle("ＡＢＣ　１２３") == "abc 123");
+    CHECK(NormalizeTitle("〜告白〜") == NormalizeTitle("～告白～"));
 
     // 挑選 release-group：只接受高分且標題相符的結果
     const json search = json::parse(R"({"release-groups":[
