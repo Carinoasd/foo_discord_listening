@@ -61,5 +61,11 @@ jobs:
           # 先寫成檔案：process substitution 裡的失敗不會讓 step 失敗，
           # tag 與 VERSION 不一致或 CHANGELOG 缺段落時必須在這裡中止。
           python3 scripts/release_notes.py "$GITHUB_REF_NAME" > release-notes.md
-          gh release create "$GITHUB_REF_NAME" dist/*.fb2k-component \
-            --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+          # 同一個 tag 重推時（例如改寫歷史後）更新既有的 Release，而不是失敗。
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.fb2k-component --clobber
+            gh release edit "$GITHUB_REF_NAME" --notes-file release-notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.fb2k-component \
+              --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+          fi
