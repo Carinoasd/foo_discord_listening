@@ -32,7 +32,9 @@ CMD
 
 mkdir -p "$ROOT/build/$ARCH"
 cp "$WSL_BASE/out-$ARCH-$CONFIG/foo_discord_listening.dll" "$ROOT/build/$ARCH/"
-if [ -f "$WSL_BASE/out-$ARCH-$CONFIG/ipc_probe.exe" ]; then
-    cp "$WSL_BASE/out-$ARCH-$CONFIG/ipc_probe.exe" "$ROOT/build/$ARCH/"
-fi
+for tool in ipc_probe client_test; do
+    if [ -f "$WSL_BASE/out-$ARCH-$CONFIG/$tool.exe" ]; then
+        cp "$WSL_BASE/out-$ARCH-$CONFIG/$tool.exe" "$ROOT/build/$ARCH/"
+    fi
+done
 echo "OK: build/$ARCH/foo_discord_listening.dll ($CONFIG)"

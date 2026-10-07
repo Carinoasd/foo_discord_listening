@@ -25,6 +25,9 @@ struct Message {
     nlohmann::json payload;
 };
 
+/// 測試用：改變要連線的 pipe 名稱前綴（預設 \\.\pipe\discord-ipc-），讓測試連到假的 Discord。
+void SetPipePrefixForTesting(std::wstring prefix);
+
 /// Discord 本機 IPC（named pipe）的最低層封裝。非執行緒安全，只給 worker 執行緒使用。
 class IpcConnection {
 public:

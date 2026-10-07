@@ -62,4 +62,11 @@ if(FDL_BUILD_TOOLS)
     target_compile_definitions(ipc_probe PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
     target_compile_options(ipc_probe PRIVATE /W4 /utf-8 /permissive-)
     target_link_libraries(ipc_probe PRIVATE nlohmann_json::nlohmann_json)
+
+    add_executable(client_test tests/client_test.cpp tests/win_stub/log_stub.cpp
+        src/discord/client.cpp src/discord/ipc_connection.cpp src/discord/activity.cpp)
+    target_include_directories(client_test PRIVATE tests/win_stub src)
+    target_compile_definitions(client_test PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_compile_options(client_test PRIVATE /W4 /utf-8 /permissive-)
+    target_link_libraries(client_test PRIVATE nlohmann_json::nlohmann_json)
 endif()

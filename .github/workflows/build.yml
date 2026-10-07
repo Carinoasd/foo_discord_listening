@@ -28,9 +28,11 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DFDL_BUILD_TOOLS=ON
       - name: Build
         run: cmake --build build
+      - name: Client integration test (fake Discord)
+        run: build/client_test.exe
       - uses: actions/upload-artifact@v4
         with:
           name: dll-${{ matrix.arch }}

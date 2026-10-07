@@ -24,7 +24,16 @@ struct FrameHeader {
 constexpr uint32_t kMaxPayload = 64 * 1024;
 constexpr auto kReadyTimeout = std::chrono::seconds(5);
 
+std::wstring& PipePrefix() {
+    static std::wstring prefix = L"\\\\.\\pipe\\discord-ipc-";
+    return prefix;
+}
+
 } // namespace
+
+void SetPipePrefixForTesting(std::wstring prefix) {
+    PipePrefix() = std::move(prefix);
+}
 
 IpcConnection::~IpcConnection() {
     Close();
@@ -34,7 +43,7 @@ bool IpcConnection::Open(const std::string& client_id, std::string& error, std::
     Close();
 
     for (int i = 0; i < 10 && !IsOpen(); ++i) {
-        const auto name = L"\\\\.\\pipe\\discord-ipc-" + std::to_wstring(i);
+        const auto name = PipePrefix() + std::to_wstring(i);
         m_pipe = CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     }
     if (!IsOpen()) {
