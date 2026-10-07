@@ -37,6 +37,12 @@ Licensed under the Microsoft Public License (MS-PL): https://opensource.org/lice
 Copyright (c) 2013-2025 Niels Lohmann. Licensed under the MIT License:
 https://github.com/nlohmann/json/blob/develop/LICENSE.MIT
 
+## foo_acfu interoperability
+
+The component registers an update source for [foo_acfu](https://acfu.3dyd.com/) by 3dyd.
+Only the public service interface (two interface declarations and their GUIDs) is declared in
+`src/acfu_api.h`, which is required for interoperability. No code from acfu-sdk is included.
+
 ## Acknowledgement
 
 This component is an independent rewrite inspired by

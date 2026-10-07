@@ -20,6 +20,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 include(cmake/deps.cmake)
 
 set(FDL_SOURCES
+    src/acfu_source.cpp
     src/art/http.cpp
     src/art/local_art.cpp
     src/art/musicbrainz.cpp
