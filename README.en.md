@@ -7,6 +7,8 @@
 [![Build](https://github.com/Carinoasd/foo_discord_listening/actions/workflows/build.yml/badge.svg)](https://github.com/Carinoasd/foo_discord_listening/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+![Demo](docs/demo.gif)
+
 A from-scratch foobar2000 component inspired by [foo_discord_rich](https://github.com/TheQwertiest/foo_discord_rich). The original has been unmaintained since 2024 and has many open issues, such as a stuck time display, missing album art, and settings that reset on restart. This rewrite was designed around those issue reports and uses no code from the original.
 
 ---
@@ -25,14 +27,18 @@ A from-scratch foobar2000 component inspired by [foo_discord_rich](https://githu
 - **Links and buttons.** URLs opened when someone clicks the title, the artist, or the album art, and up to two buttons (for example, "Search on YouTube").
 - **Privacy filters.** Hide the status, or skip album art, for tracks that match a foobar2000 search query.
 - **Keep the status when stopped** (optional). The last song stays visible after you stop playback.
-- **Traditional Chinese UI.** Used automatically when Windows is set to Traditional Chinese.
+- **Clear when idle.** The status is cleared after you've been paused or stopped for a while (15 minutes by default), so it doesn't linger when you walk away.
+- **Playlist filters.** Hide the status for some playlists, or show it only for some, with `*` wildcards.
+- **Live preview** of the three text lines on the preferences page.
+- **Choose a Discord client** when Discord, PTB, and Canary are running at the same time.
+- **English, Traditional Chinese, Simplified Chinese, and Japanese UI**, picked from the Windows display language.
 - **Moving from foo_discord_rich.** The settings you changed there are picked up on first start.
 - **Never slows foobar2000 down.**
   - The Discord connection and all network requests run on background threads.
   - Every request has a timeout, and the component reconnects automatically when Discord starts.
   - Pending work is aborted immediately when foobar2000 exits, including a stuck upload command.
 - Supports foobar2000 2.x x64 and x86. The preferences pages support dark mode.
-- Checks for a new version once a day (can be turned off).
+- Checks for a new version once a day (can be turned off). On 32-bit foobar2000 you can also use [foo_acfu](https://acfu.3dyd.com/) (foo_acfu is 32-bit only).
 
 ![Preferences](docs/preferences-en.png)
 
@@ -55,10 +61,14 @@ Settings are in **File > Preferences > Tools > Discord Listening**, or open them
 | Type | Listening to | Playing / Watching are also available |
 | Status shows | Line 1 (song title) | What the member list and your status show |
 | When paused | Keep showing the song | Or clear the status |
+| Clear after N min | 15 | Clear after this long paused (or stopped, when keeping the last song); 0 = never |
 | When stopped | Clear the status | Or keep showing the last song |
 | Line 1 / 2 / 3 | `[%title%]` / `[%artist%]` / `[%album%]` | Title formatting; line 3 is also the album art tooltip |
 | Icons | All on | Play / pause / stop icon, placeholder art, "(Paused)" on line 1 |
 | Application ID | Empty | Empty uses the built-in one; see below to show a different name |
+| Discord client | Any Discord | Pick Discord, PTB, or Canary when several are running |
+
+The **Preview** box shows the current song with the three formats applied, updated as you type, before you click Apply.
 
 ### Album art
 
@@ -99,6 +109,8 @@ https://www.youtube.com/results?search_query=[%artist% ]%title%
 ```
 
 Only **other people** can click buttons and links. That's how Discord works.
+
+**Hide playlists / Only playlists** take playlist names separated by `;`. `*` matches anything, and matching ignores case. For example, hide `Private;Podcast*`, or show only `Public*`. If both are set, hiding wins.
 
 ### Want a different name?
 

@@ -173,10 +173,14 @@ bool PlayingFromHiddenPlaylist() {
         return false;
     }
     auto pm = playlist_manager::get();
-    pfc::string8 name;
-    if (const auto index = pm->get_playing_playlist(); index != SIZE_MAX) {
-        pm->playlist_get_name(index, name);
+    const auto index = pm->get_playing_playlist();
+    if (index == SIZE_MAX) {
+        // 剛換曲時 foobar2000 可能還沒回報正在播放的清單。有設定清單過濾時先當作隱藏，
+        // 等稍後的刷新確認清單再顯示，避免被隱藏的歌短暫送出。
+        return true;
     }
+    pfc::string8 name;
+    pm->playlist_get_name(index, name);
     return playlist_filter::IsHidden(name.c_str(), hide, only);
 }
 

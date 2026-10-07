@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.3.0] - 2026-10-07
+
+### Added
+
+- **暫停太久自動清除狀態。** 暫停（或「停止時保留」）超過指定分鐘數就清除，預設 15 分鐘，0 為不清除。
+  *Clear the status after being paused or stopped for a while (15 minutes by default).*
+- **依播放清單過濾。** 「隱藏這些清單」與「只顯示這些清單」，分號分隔、支援 `*`、不分大小寫。
+  *Hide the status for some playlists, or show it only for some.*
+- **設定頁即時預覽。** 修改三行文字格式時，直接顯示目前這首歌套用後的樣子。
+  *A live preview of the three text lines on the preferences page.*
+- **指定 Discord 版本。** 同時開了正式版、PTB、Canary 時可選擇要連哪一個；狀態列顯示實際連上的版本。
+  *Choose between Discord, PTB, and Canary. The status shows which one is connected.*
+- **簡體中文與日文介面**，連同原本的英文與繁體中文，依 Windows 介面語言自動切換。
+  *Simplified Chinese and Japanese UI, alongside English and Traditional Chinese.*
+- **foo_acfu 支援。** 32 位元 foobar2000 可在 foo_acfu 中檢查本元件的更新（foo_acfu 只有 32 位元版）。
+  *Update checks through foo_acfu on 32-bit foobar2000.*
+- README 加入示意動圖。
+  *A demo animation in the README.*
+
+### Changed
+
+- 封面改抓較大的尺寸：iTunes 1000×1000、Cover Art Archive 1200px。
+  *Larger album art: 1000×1000 from iTunes, 1200px from Cover Art Archive.*
+- 設定頁改為單一版面＋翻譯表，新增語言時不必再複製對話框。
+  *Preferences use one layout plus a translation table, so adding a language no longer means copying dialogs.*
+
+### Fixed
+
+- 設定「隱藏這些清單」時，剛換曲的瞬間可能還不知道正在播放哪個清單，被隱藏的歌會短暫送出；現在會等確認清單後才顯示。
+  *A hidden playlist's song could briefly be sent right after a track change.*
+
+---
+
 ## [0.2.0] - 2026-10-07
 
 ### Added
@@ -99,5 +132,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - 上傳程式輸出較多時會卡住，錯誤訊息也被當成封面網址（#79）。
   *The uploader could deadlock on large output, and error text was used as an art URL.*
 
+[0.3.0]: https://github.com/Carinoasd/foo_discord_listening/releases/tag/v0.3.0
 [0.2.0]: https://github.com/Carinoasd/foo_discord_listening/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Carinoasd/foo_discord_listening/releases/tag/v0.1.0
