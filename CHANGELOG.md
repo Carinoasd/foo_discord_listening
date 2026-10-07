@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [0.1.0] - 未發布 / Unreleased
+## [0.1.0] - 2026-10-07
 
 第一個版本。從零重寫，參考 foo_discord_rich 的 issue 紀錄設計。
 *First release. A from-scratch rewrite designed around the foo_discord_rich issue history.*
