@@ -6,7 +6,7 @@
 
 IDD_PREFS DIALOGEX 0, 0, 332, 276
 STYLE DS_SETFONT | WS_CHILD
-FONT 9, "Microsoft JhengHei UI", 400, 0, 0x1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     AUTOCHECKBOX    "在 Discord 顯示正在播放的歌曲", IDC_ENABLED, 7, 3, 318, 10
 
@@ -44,7 +44,7 @@ END
 
 IDD_PREFS_ART DIALOGEX 0, 0, 332, 276
 STYLE DS_SETFONT | WS_CHILD
-FONT 9, "Microsoft JhengHei UI", 400, 0, 0x1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     AUTOCHECKBOX    "顯示專輯封面", IDC_ART_ENABLED, 7, 3, 318, 10
 
@@ -76,7 +76,7 @@ END
 
 IDD_PREFS_LINKS DIALOGEX 0, 0, 332, 276
 STYLE DS_SETFONT | WS_CHILD
-FONT 9, "Microsoft JhengHei UI", 400, 0, 0x1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "所有欄位都使用 title formatting，留空即關閉。連結中的空白與中日文會自動編碼。", IDC_STATIC, 7, 3, 318, 18
 
@@ -109,7 +109,7 @@ END
 IDD_MANUAL_ART DIALOGEX 0, 0, 300, 82
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "指定 Discord 專輯封面"
-FONT 9, "Microsoft JhengHei UI", 400, 0, 0x1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "", IDC_MANUAL_ALBUM, 7, 7, 286, 8
     LTEXT           "圖片網址（https://...）。留空則改回自動抓取的封面。", IDC_STATIC, 7, 21, 286, 8

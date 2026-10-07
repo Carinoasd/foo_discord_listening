@@ -230,6 +230,27 @@ int main() {
     std::this_thread::sleep_for(1s);
     CHECK(server->Activities().size() == before);
 
+    std::printf("== 時間戳只差 1 秒以內視為相同（取整跨秒），不重送\n");
+    {
+        auto a = Song("Jitter");
+        a.start_ms = 1'000'000;
+        a.end_ms = 1'180'000;
+        client.SetActivity(a);
+        CHECK(WaitUntil([&] { return LastDetails(*server) == "Jitter"; }, 3s));
+        const auto n = server->Activities().size();
+        a.start_ms = 1'001'000;
+        a.end_ms = 1'181'000;
+        client.SetActivity(a);
+        std::this_thread::sleep_for(1s);
+        CHECK(server->Activities().size() == n);
+        a.start_ms = 1'030'000; // 拖動進度條：差很多就要重送
+        a.end_ms = 1'210'000;
+        client.SetActivity(a);
+        CHECK(WaitUntil([&] { return server->Activities().size() == n + 1; }, 3s));
+        client.SetActivity(Song("First"));
+        CHECK(WaitUntil([&] { return LastDetails(*server) == "First"; }, 3s));
+    }
+
     std::printf("== Discord 斷線後自動重連並補送目前狀態\n");
     server->ClearActivities();
     server->DropClient();

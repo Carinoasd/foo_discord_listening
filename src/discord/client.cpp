@@ -80,10 +80,35 @@ void Client::SetClientId(std::string client_id) {
     m_cv.notify_all();
 }
 
+namespace {
+
+/// 時間戳取整到秒，跨過秒的邊界時會差 1 秒。這種差異不值得多用一次 Discord 的限流額度。
+bool SameIgnoringJitter(const std::optional<Activity>& a, const std::optional<Activity>& b) {
+    if (a.has_value() != b.has_value()) {
+        return false;
+    }
+    if (!a) {
+        return true;
+    }
+    auto close = [](const std::optional<int64_t>& x, const std::optional<int64_t>& y) {
+        return x.has_value() == y.has_value() && (!x || std::llabs(*x - *y) <= 1000);
+    };
+    if (!close(a->start_ms, b->start_ms) || !close(a->end_ms, b->end_ms)) {
+        return false;
+    }
+    Activity x = *a;
+    Activity y = *b;
+    x.start_ms = y.start_ms;
+    x.end_ms = y.end_ms;
+    return x == y;
+}
+
+} // namespace
+
 void Client::SetActivity(std::optional<Activity> activity) {
     {
         std::scoped_lock lock(m_mutex);
-        if (m_activity == activity) {
+        if (SameIgnoringJitter(m_activity, activity)) {
             return;
         }
         m_activity = std::move(activity);
@@ -105,6 +130,7 @@ void Client::Run(std::stop_token stop) {
     uint64_t seen_version = 0;
     std::string seen_id;
     bool sent_any = false;
+    std::string last_error;
     auto retry_delay = kMinRetry;
     auto next_retry = Clock::now();
     uint64_t nonce = 0;
@@ -149,11 +175,19 @@ void Client::Run(std::stop_token stop) {
                 std::string error;
                 if (!conn.Open(client_id, error, stop)) {
                     set_status(ConnectionState::error, error);
+                    // Discord 沒開時會一直重試；同樣的錯誤只在主控台記一次，避免洗版。
+                    if (error != last_error) {
+                        Log("could not connect to Discord: {}", error);
+                        last_error = error;
+                    } else {
+                        DebugLog("could not connect to Discord: {}", error);
+                    }
                     next_retry = Clock::now() + retry_delay;
                     retry_delay = std::min<std::chrono::seconds>(retry_delay * 2, kMaxRetry);
                     continue;
                 }
                 Log("connected to Discord");
+                last_error.clear();
                 set_status(ConnectionState::connected, Tr(StringId::conn_connected));
                 connected_id = client_id;
                 retry_delay = kMinRetry;
