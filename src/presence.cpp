@@ -9,8 +9,10 @@
 #include "art/service.h"
 #include "config.h"
 #include "discord/client.h"
+#include "log.h"
 
 #include <chrono>
+#include <map>
 
 namespace fdl::presence {
 namespace {
@@ -75,6 +77,34 @@ int64_t NowMs() {
     return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
+/// 曲目是否符合 foobar2000 搜尋語法的條件。條件為空或語法錯誤時回傳 false（不過濾）。
+bool Matches(const char* query, const metadb_handle_ptr& track) {
+    if (!query || !*query) {
+        return false;
+    }
+    // 每個條件字串只編譯一次；語法錯誤的條件存成空指標，只記錄一次錯誤。
+    static std::map<std::string, search_filter::ptr, std::less<>> cache;
+    auto it = cache.find(query);
+    if (it == cache.end()) {
+        if (cache.size() > 16) {
+            cache.clear();
+        }
+        search_filter::ptr filter;
+        try {
+            filter = search_filter_manager::get()->create(query);
+        } catch (const std::exception& e) {
+            Log("invalid filter \"{}\": {}", query, e.what());
+        }
+        it = cache.emplace(query, filter).first;
+    }
+    if (!it->second.is_valid()) {
+        return false;
+    }
+    bool out = false;
+    it->second->test_multi(pfc::list_single_ref_t<metadb_handle_ptr>(track), &out);
+    return out;
+}
+
 std::string IconUrl(const char* name) {
     return std::string(config::icon_base_url) + name + ".png";
 }
@@ -89,7 +119,7 @@ discord::Activity BuildFor(const metadb_handle_ptr& track, PlayState state, bool
     a.details = FormatTitle(track, config::details_format.get(), now_playing);
     a.state = FormatTitle(track, config::state_format.get(), now_playing);
     a.large_text = FormatTitle(track, config::large_text_format.get(), now_playing);
-    if (config::art_enabled) {
+    if (config::art_enabled && !Matches(config::art_filter_query.get(), track)) {
         if (auto url = ResolveArt(track)) {
             a.large_image = std::move(*url);
         }
@@ -97,6 +127,18 @@ discord::Activity BuildFor(const metadb_handle_ptr& track, PlayState state, bool
     if (a.large_image.empty() && config::no_art_image) {
         // 沒有封面時顯示預設圖，而不是 Discord 的應用程式預設圖示。
         a.large_image = IconUrl("no-art");
+    }
+
+    a.details_url = FormatTitle(track, config::details_url.get(), now_playing);
+    a.state_url = FormatTitle(track, config::state_url.get(), now_playing);
+    a.large_url = FormatTitle(track, config::large_url.get(), now_playing);
+    const std::pair<cfg_string*, cfg_string*> buttons[] = { { &config::button1_label, &config::button1_url },
+                                                            { &config::button2_label, &config::button2_url } };
+    for (const auto& [label, url] : buttons) {
+        discord::Button button{ FormatTitle(track, label->get(), now_playing), FormatTitle(track, url->get(), now_playing) };
+        if (!button.label.empty() && !button.url.empty()) {
+            a.buttons.push_back(std::move(button));
+        }
     }
 
     if (config::small_icons) {
@@ -121,12 +163,17 @@ std::optional<discord::Activity> Build() {
     auto pc = playback_control::get();
     metadb_handle_ptr track;
     if (!pc->is_playing() || !pc->get_now_playing(track)) {
-        if (config::GetStopMode() == config::StopMode::keep && g_last_track.is_valid()) {
+        if (config::GetStopMode() == config::StopMode::keep && g_last_track.is_valid()
+            && !Matches(config::filter_query.get(), g_last_track)) {
             return BuildFor(g_last_track, PlayState::stopped, false);
         }
         return std::nullopt;
     }
     g_last_track = track;
+    // 符合過濾條件的曲目（例如不想公開的專輯）完全不顯示（上游 #68）。
+    if (Matches(config::filter_query.get(), track)) {
+        return std::nullopt;
+    }
 
     const bool paused = pc->is_paused();
     if (paused && config::GetPauseMode() == config::PauseMode::clear) {

@@ -29,6 +29,10 @@ std::string PadToMin(std::string text, size_t units) {
     return text;
 }
 
+bool IsHex(char c) {
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
 bool IsValidUrl(std::string_view url, size_t max_len) {
     return url.size() <= max_len && (url.starts_with("https://") || url.starts_with("http://"));
 }
@@ -46,12 +50,40 @@ void PutText(nlohmann::json& obj, const char* key, std::string_view text, size_t
 }
 
 void PutUrl(nlohmann::json& obj, const char* key, std::string_view url) {
-    if (IsValidUrl(url, kMaxUrl)) {
-        obj[key] = url;
+    auto normalized = NormalizeUrl(url);
+    if (IsValidUrl(normalized, kMaxUrl)) {
+        obj[key] = std::move(normalized);
     }
 }
 
 } // namespace
+
+std::string NormalizeUrl(std::string_view url) {
+    while (!url.empty() && static_cast<unsigned char>(url.front()) <= ' ') {
+        url.remove_prefix(1);
+    }
+    while (!url.empty() && static_cast<unsigned char>(url.back()) <= ' ') {
+        url.remove_suffix(1);
+    }
+    static constexpr char kHex[] = "0123456789ABCDEF";
+    static constexpr std::string_view kUnsafe = " \"<>\\^`{|}";
+    std::string out;
+    out.reserve(url.size());
+    for (size_t i = 0; i < url.size(); ++i) {
+        const auto c = static_cast<unsigned char>(url[i]);
+        const bool escaped = c == '%' && i + 2 < url.size() && IsHex(url[i + 1]) && IsHex(url[i + 2]);
+        if (c == '%' && !escaped) {
+            out += "%25";
+        } else if (c >= 0x80 || c < 0x20 || kUnsafe.find(static_cast<char>(c)) != std::string_view::npos) {
+            out += '%';
+            out += kHex[c >> 4];
+            out += kHex[c & 0xF];
+        } else {
+            out += static_cast<char>(c);
+        }
+    }
+    return out;
+}
 
 std::string FitText(std::string_view text, size_t max_units) {
     // 去掉前後空白：Discord 會自行 trim，trim 後長度不足會讓整個 activity 被拒。
@@ -134,8 +166,9 @@ nlohmann::json ToJson(const Activity& activity) {
             break;
         }
         auto label = FitText(button.label, kMaxButtonLabel);
-        if (!label.empty() && IsValidUrl(button.url, kMaxButtonUrl)) {
-            buttons.push_back({ { "label", std::move(label) }, { "url", button.url } });
+        auto url = NormalizeUrl(button.url);
+        if (!label.empty() && IsValidUrl(url, kMaxButtonUrl)) {
+            buttons.push_back({ { "label", std::move(label) }, { "url", std::move(url) } });
         }
     }
     if (!buttons.empty()) {

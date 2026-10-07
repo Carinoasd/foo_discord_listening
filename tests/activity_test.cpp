@@ -115,6 +115,22 @@ int main() {
     u.details_url = "javascript:alert(1)";
     CHECK(!ToJson(u).contains("details_url"));
 
+    // 使用者用 title formatting 組出的網址：空白與中日文要編碼，已編碼的部分不重複編碼
+    CHECK(NormalizeUrl("https://www.youtube.com/results?search_query=Aimer 夜行列車")
+          == "https://www.youtube.com/results?search_query=Aimer%20%E5%A4%9C%E8%A1%8C%E5%88%97%E8%BB%8A");
+    CHECK(NormalizeUrl("  https://a.b/c?q=x%20y  ") == "https://a.b/c?q=x%20y");
+    CHECK(NormalizeUrl("https://a.b/100%") == "https://a.b/100%25");
+    CHECK(NormalizeUrl("https://a.b/%zz") == "https://a.b/%25zz");
+    CHECK(NormalizeUrl("https://a.b/x\"y") == "https://a.b/x%22y");
+    CHECK(NormalizeUrl("") == "");
+    Activity link;
+    link.details = "Song";
+    link.details_url = "https://www.youtube.com/results?search_query=A B";
+    link.buttons = { { "Search", "https://www.youtube.com/results?search_query=歌" } };
+    j = ToJson(link);
+    CHECK(j["details_url"] == "https://www.youtube.com/results?search_query=A%20B");
+    CHECK(j["buttons"][0]["url"] == "https://www.youtube.com/results?search_query=%E6%AD%8C");
+
     if (g_failed == 0) {
         std::printf("all tests passed\n");
     }

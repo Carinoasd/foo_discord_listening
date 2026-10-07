@@ -37,6 +37,18 @@ inline constexpr bool default_no_art_image = true;
 inline constexpr bool default_paused_text = true;
 inline constexpr StopMode default_stop_mode = StopMode::clear;
 
+// 連結與按鈕：title formatting，結果為空就不送。網址中的空白與非 ASCII 字元會自動編碼。
+inline constexpr char default_details_url[] = "";
+inline constexpr char default_state_url[] = "";
+inline constexpr char default_large_url[] = "";
+inline constexpr char default_button1_label[] = "";
+inline constexpr char default_button1_url[] = "";
+inline constexpr char default_button2_label[] = "";
+inline constexpr char default_button2_url[] = "";
+// 過濾：foobar2000 搜尋語法，空字串表示不過濾。
+inline constexpr char default_filter_query[] = "";
+inline constexpr char default_art_filter_query[] = "";
+
 /// 圖示放在 GitHub repo，以外部網址交給 Discord（不必上傳到 Developer Portal）。
 inline constexpr char icon_base_url[] = "https://raw.githubusercontent.com/Carinoasd/foo_discord_listening/main/assets/";
 inline constexpr ArtSource default_art_source = ArtSource::musicbrainz;
@@ -61,6 +73,15 @@ extern cfg_bool small_icons;
 extern cfg_bool no_art_image;
 extern cfg_bool paused_text;
 extern cfg_int stop_mode; // StopMode
+extern cfg_string details_url;
+extern cfg_string state_url;
+extern cfg_string large_url;
+extern cfg_string button1_label;
+extern cfg_string button1_url;
+extern cfg_string button2_label;
+extern cfg_string button2_url;
+extern cfg_string filter_query;
+extern cfg_string art_filter_query;
 extern cfg_int art_source; // ArtSource
 extern cfg_string upload_command;
 extern cfg_string upload_key_format;
