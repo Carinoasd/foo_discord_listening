@@ -5,6 +5,7 @@
 #pragma once
 
 #include "discord/activity.h"
+#include "discord/variant.h"
 
 #include <condition_variable>
 #include <cstdint>
@@ -35,8 +36,8 @@ public:
     void Start();
     void Stop();
 
-    /// 空字串表示停用（斷線且不再重連）。
-    void SetClientId(std::string client_id);
+    /// 空字串表示停用（斷線且不再重連）。variant 指定要連哪個版本的 Discord。
+    void SetClientId(std::string client_id, ClientVariant variant = ClientVariant::any);
     /// nullopt 表示清除目前的 activity。只保留最新的一筆，舊的還沒送出就會被覆蓋。
     void SetActivity(std::optional<Activity> activity);
 
@@ -49,6 +50,7 @@ private:
     mutable std::mutex m_mutex;
     std::condition_variable_any m_cv;
     std::string m_client_id;
+    ClientVariant m_variant = ClientVariant::any;
     std::optional<Activity> m_activity;
     uint64_t m_activity_version = 0;
     Status m_status;

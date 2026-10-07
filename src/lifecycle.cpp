@@ -21,7 +21,8 @@
 namespace fdl {
 
 void ApplySettings() {
-    discord::Client::Get().SetClientId(config::enabled ? config::EffectiveAppId() : std::string{});
+    discord::Client::Get().SetClientId(config::enabled ? config::EffectiveAppId() : std::string{},
+                                       static_cast<discord::ClientVariant>(config::DiscordClient()));
     presence::Refresh();
 }
 

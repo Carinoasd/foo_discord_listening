@@ -18,6 +18,7 @@ enum class StopMode : int64_t {
 
 inline constexpr bool default_enabled = true;
 inline constexpr char default_app_id[] = "";
+inline constexpr int64_t default_discord_client = 0; // 0 任何版本、1 正式版、2 PTB、3 Canary
 inline constexpr int64_t default_activity_type = 2; // listening
 inline constexpr int64_t default_status_display = 2; // details（歌名）
 inline constexpr char default_details_format[] = "[%title%]";
@@ -67,6 +68,7 @@ inline constexpr char builtin_app_id[] = "1557181309678260225"; // Discord appli
 
 extern cfg_bool enabled;
 extern cfg_string app_id;
+extern cfg_int discord_client; // discord::ClientVariant
 extern cfg_int activity_type;
 extern cfg_int status_display;
 extern cfg_string details_format;
@@ -109,5 +111,6 @@ int64_t ActivityType();
 int64_t StatusDisplay();
 PauseMode GetPauseMode();
 StopMode GetStopMode();
+int64_t DiscordClient();
 
 } // namespace fdl::config

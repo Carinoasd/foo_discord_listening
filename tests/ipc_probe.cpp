@@ -24,6 +24,15 @@ int main(int argc, char** argv) {
     std::stop_source stop;
     const bool ok = conn.Open(client_id, error, stop.get_token());
     std::printf("handshake with client_id=%s: %s%s%s\n", client_id.c_str(), ok ? "READY" : "rejected", ok ? "" : " - ", error.c_str());
+    if (ok) {
+        // 只印出辨識版本需要的欄位，不印出使用者資料。
+        const auto& ready = conn.ReadyData();
+        std::printf("READY config: %s\n", ready.value("config", nlohmann::json::object()).dump().c_str());
+        std::printf("READY user keys: ");
+        for (const auto& [k, v] : ready.value("user", nlohmann::json::object()).items()) std::printf("%s ", k.c_str());
+        std::printf("\n");
+        if (argc > 2) return 0; // 只看 READY，不送測試狀態
+    }
     if (!ok) {
         return argc > 1 ? 1 : (error.empty() ? 1 : 0);
     }

@@ -11,6 +11,7 @@ namespace fdl::config {
 
 cfg_bool enabled(guids::cfg_enabled, default_enabled);
 cfg_string app_id(guids::cfg_app_id, default_app_id);
+cfg_int discord_client(guids::cfg_discord_client, default_discord_client);
 cfg_int activity_type(guids::cfg_activity_type, default_activity_type);
 cfg_int status_display(guids::cfg_status_display, default_status_display);
 cfg_string details_format(guids::cfg_details_format, default_details_format);
@@ -68,6 +69,11 @@ PauseMode GetPauseMode() {
 StopMode GetStopMode() {
     const auto v = static_cast<StopMode>(stop_mode.get());
     return v == StopMode::clear || v == StopMode::keep ? v : default_stop_mode;
+}
+
+int64_t DiscordClient() {
+    const auto v = discord_client.get();
+    return v >= 0 && v <= 3 ? v : default_discord_client;
 }
 
 } // namespace fdl::config

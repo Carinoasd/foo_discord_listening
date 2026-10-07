@@ -63,6 +63,11 @@ public:
     }
 
     void SetMode(Mode mode) { m_mode = mode; }
+    /// READY 裡回報的 API 端點，用來模擬不同版本的 Discord。
+    void SetEndpoint(std::string endpoint) {
+        std::scoped_lock lock(m_mutex);
+        m_endpoint = std::move(endpoint);
+    }
 
     /// 要求伺服器執行緒中斷目前的連線（同步 pipe 的 I/O 會排隊，不能從別的執行緒直接 Disconnect）。
     void DropClient() { m_drop = true; }
@@ -163,7 +168,12 @@ private:
             std::this_thread::sleep_for(200ms);
             return;
         }
-        WriteFrame(pipe, 1, { { "cmd", "DISPATCH" }, { "evt", "READY" }, { "data", { { "v", 1 } } } });
+        std::string endpoint;
+        {
+            std::scoped_lock lock(m_mutex);
+            endpoint = m_endpoint;
+        }
+        WriteFrame(pipe, 1, { { "cmd", "DISPATCH" }, { "evt", "READY" }, { "data", { { "v", 1 }, { "config", { { "api_endpoint", endpoint } } } } } });
         m_connected = true;
         if (m_mode == Mode::hang_after_ready) {
             // 模擬 Discord 卡住：不再讀取任何資料，直到測試結束。
@@ -192,6 +202,7 @@ private:
     std::atomic<int> m_connections = 0;
     std::atomic<bool> m_connected = false;
     std::atomic<bool> m_drop = false;
+    std::string m_endpoint = "//discord.com/api";
     std::jthread m_thread;
 };
 
@@ -285,6 +296,18 @@ int main() {
     client.SetClientId("");
     CHECK(WaitUntil([&] { return client.GetStatus().state == ConnectionState::disabled; }, 3s));
     CHECK(WaitUntil([&] { return !server->Connected(); }, 3s));
+
+    std::printf("== 指定 Discord 版本\n");
+    server->SetEndpoint("//canary.discord.com/api");
+    client.SetClientId("321", ClientVariant::ptb);
+    CHECK(WaitUntil([&] { return client.GetStatus().state == ConnectionState::error; }, 5s));
+    CHECK(client.GetStatus().message.find("Discord PTB") != std::string::npos);
+    client.SetClientId("321", ClientVariant::canary);
+    CHECK(WaitUntil([&] { return client.GetStatus().state == ConnectionState::connected; }, 10s));
+    CHECK(client.GetStatus().message.find("Canary") != std::string::npos);
+    server->SetEndpoint("//discord.com/api");
+    client.SetClientId("");
+    CHECK(WaitUntil([&] { return client.GetStatus().state == ConnectionState::disabled; }, 3s));
 
     std::printf("== 無效的 client ID\n");
     server->SetMode(FakeDiscord::Mode::reject);

@@ -69,13 +69,14 @@ void Client::Stop() {
     m_thread.join();
 }
 
-void Client::SetClientId(std::string client_id) {
+void Client::SetClientId(std::string client_id, ClientVariant variant) {
     {
         std::scoped_lock lock(m_mutex);
-        if (m_client_id == client_id) {
+        if (m_client_id == client_id && m_variant == variant) {
             return;
         }
         m_client_id = std::move(client_id);
+        m_variant = variant;
     }
     m_cv.notify_all();
 }
@@ -143,13 +144,18 @@ void Client::Run(std::stop_token stop) {
     while (!stop.stop_requested()) {
         try {
             std::string client_id;
+            ClientVariant variant = ClientVariant::any;
             std::optional<Activity> activity;
             uint64_t version = 0;
             {
                 std::unique_lock lock(m_mutex);
                 // 只在有新資料時提早醒來；被限流而尚未送出的更新由下一個 tick 處理，避免空轉。
-                m_cv.wait_for(lock, stop, kTick, [&] { return m_activity_version != seen_version || m_client_id != seen_id; });
-                client_id = seen_id = m_client_id;
+                // 連線目標 = app ID + Discord 版本；任一改變都要重連。
+                const auto target = [&] { return m_client_id.empty() ? std::string{} : m_client_id + "#" + std::to_string(static_cast<int>(m_variant)); };
+                m_cv.wait_for(lock, stop, kTick, [&] { return m_activity_version != seen_version || target() != seen_id; });
+                seen_id = target();
+                client_id = m_client_id;
+                variant = m_variant;
                 activity = m_activity;
                 version = seen_version = m_activity_version;
             }
@@ -157,7 +163,7 @@ void Client::Run(std::stop_token stop) {
                 break;
             }
 
-            if (conn.IsOpen() && client_id != connected_id) {
+            if (conn.IsOpen() && seen_id != connected_id) {
                 conn.Close();
             }
             if (client_id.empty()) {
@@ -173,7 +179,7 @@ void Client::Run(std::stop_token stop) {
                 }
                 set_status(ConnectionState::connecting, Tr(StringId::conn_connecting));
                 std::string error;
-                if (!conn.Open(client_id, error, stop)) {
+                if (!conn.Open(client_id, error, stop, variant)) {
                     set_status(ConnectionState::error, error);
                     // Discord 沒開時會一直重試；同樣的錯誤只在主控台記一次，避免洗版。
                     if (error != last_error) {
@@ -186,10 +192,10 @@ void Client::Run(std::stop_token stop) {
                     retry_delay = std::min<std::chrono::seconds>(retry_delay * 2, kMaxRetry);
                     continue;
                 }
-                Log("connected to Discord");
+                Log("connected to {}", VariantName(conn.Variant()));
                 last_error.clear();
-                set_status(ConnectionState::connected, Tr(StringId::conn_connected));
-                connected_id = client_id;
+                set_status(ConnectionState::connected, std::string(Tr(StringId::conn_connected)) + " (" + VariantName(conn.Variant()) + ")");
+                connected_id = seen_id;
                 retry_delay = kMinRetry;
                 sent_any = false;
             }

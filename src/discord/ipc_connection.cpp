@@ -40,20 +40,45 @@ IpcConnection::~IpcConnection() {
     Close();
 }
 
-bool IpcConnection::Open(const std::string& client_id, std::string& error, std::stop_token stop) {
+bool IpcConnection::Open(const std::string& client_id, std::string& error, std::stop_token stop, ClientVariant preferred) {
     Close();
-
-    for (int i = 0; i < 10 && !IsOpen(); ++i) {
-        const auto name = PipePrefix() + std::to_wstring(i);
-        m_pipe = CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    bool any_pipe = false;
+    for (int i = 0; i < 10 && !stop.stop_requested(); ++i) {
+        std::string pipe_error;
+        if (!TryPipe(PipePrefix() + std::to_wstring(i), client_id, pipe_error, stop)) {
+            if (!pipe_error.empty()) {
+                // Discord 有回應但拒絕（例如 client ID 無效）：換其他 pipe 也一樣，直接回報。
+                error = pipe_error;
+                return false;
+            }
+            continue;
+        }
+        any_pipe = true;
+        if (preferred == ClientVariant::any || Variant() == preferred) {
+            return true;
+        }
+        Close(); // 是別的版本的 Discord，繼續找
     }
-    if (!IsOpen()) {
+    if (preferred != ClientVariant::any && any_pipe) {
+        error = std::string(VariantName(preferred)) + ": " + Tr(StringId::conn_not_running);
+    } else if (error.empty()) {
         error = Tr(StringId::conn_not_running);
+    }
+    return false;
+}
+
+ClientVariant IpcConnection::Variant() const {
+    return ClassifyEndpoint(json::GetString(json::GetObject(m_ready, "config"), "api_endpoint"));
+}
+
+bool IpcConnection::TryPipe(const std::wstring& name, const std::string& client_id, std::string& error, std::stop_token stop) {
+    m_pipe = CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (!IsOpen()) {
         return false;
     }
+    m_ready = nlohmann::json::object();
 
     if (!Send(Opcode::handshake, { { "v", 1 }, { "client_id", client_id } })) {
-        error = "handshake failed";
         Close();
         return false;
     }
@@ -72,11 +97,12 @@ bool IpcConnection::Open(const std::string& client_id, std::string& error, std::
             return false;
         }
         if (msg->opcode == Opcode::frame && json::GetString(msg->payload, "evt") == "READY") {
+            m_ready = json::GetObject(msg->payload, "data");
             return true;
         }
     }
 
-    if (error.empty()) {
+    if (IsOpen() && !stop.stop_requested()) {
         error = "timed out waiting for Discord";
     }
     Close();
