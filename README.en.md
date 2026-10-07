@@ -31,16 +31,16 @@ A from-scratch foobar2000 component inspired by [foo_discord_rich](https://githu
 
 1. Download `foo_discord_listening-x.y.z.fb2k-component` from [Releases](https://github.com/Carinoasd/foo_discord_listening/releases).
 2. In foobar2000, open **File > Preferences > Components**, drop the file in, click **Apply**, and restart.
-3. Open **File > Preferences > Tools > Discord Listening** and enter a Discord application ID (see below).
+3. Start playing music, and Discord shows "Listening to foobar2000". Settings are in **File > Preferences > Tools > Discord Listening**.
 
 > If you have foo_discord_rich installed, remove it first. Both components update your Discord status and will overwrite each other.
 
-### Discord application ID
+### Want a different name?
 
-In "Listening to **XXX**", XXX is the name of a Discord application, so you need one:
+The "foobar2000" in "Listening to **foobar2000**" is the name of the built-in Discord application. To show something else, create your own:
 
-1. Go to the [Discord Developer Portal](https://discord.com/developers/applications), click **New Application**, and give it the name you want to show (for example `foobar2000`).
-2. Copy the **Application ID** (a number) into the *Application ID* field and click **Apply**.
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications), click **New Application**, and name it what you want to show.
+2. Copy the **Application ID** (a number) into the *Application ID* field and click **Apply**. Leave the field empty to use the built-in one.
 
 The application ID is not a secret.
 
@@ -79,7 +79,7 @@ curl -s -F reqtype=fileupload -F fileToUpload=@{path} https://catbox.moe/user/ap
   - Run Discord and foobar2000 at the same privilege level. A Discord running as administrator can't be reached by a normal process.
   - Don't add foobar2000 as a "game" in Discord.
 - **The art is a question mark or wrong.** Right-click the track and choose **Utilities > Re-fetch Discord album art**. Adding a `MUSICBRAINZ_ALBUMID` tag gives the most accurate results.
-- **Logs.** Open **View > Console**. All messages start with `[foo_discord_listening]`.
+- **Logs.** Open **View > Console**. All messages start with `[foo_discord_listening]`. For more detail, enable *Write debug log* under **Preferences > Advanced > Tools > Discord Listening**. Everything sent to and received from Discord is then written to `foo_discord_listening\debug.log` in your profile folder. Please attach it when reporting issues.
 - Discord doesn't show the progress bar on your own profile. Others can see it.
 
 ## Building

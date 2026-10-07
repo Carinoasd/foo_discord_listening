@@ -29,8 +29,11 @@ int main(int argc, char** argv) {
     }
 
     Activity a;
-    a.details = "ipc_probe test";
-    a.state = "foo_discord_listening";
+    // 盡量接近元件實際送出的內容：Listening、狀態列顯示第一行、CAA 封面網址。
+    a.details = "Come Together (ipc_probe test)";
+    a.state = "The Beatles";
+    a.large_text = "Abbey Road";
+    a.large_image = "https://coverartarchive.org/release-group/9162580e-5df4-32de-80cc-f45a8d8a9b1d/front-500";
     const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     a.start_ms = now;
     a.end_ms = now + 180000;

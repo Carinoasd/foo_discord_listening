@@ -160,6 +160,7 @@ void Client::Run(std::stop_token stop) {
             }
 
             while (auto msg = conn.Poll()) {
+                DebugLog("<- Discord op={} {}", static_cast<unsigned>(msg->opcode), msg->payload.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
                 if (msg->opcode == Opcode::frame && json::GetString(msg->payload, "evt") == "ERROR") {
                     const auto& data = json::GetObject(msg->payload, "data");
                     Log("Discord rejected the activity (code {}): {}", json::GetInt(data, "code"), json::GetString(data, "message", "unknown error"));
@@ -181,7 +182,8 @@ void Client::Run(std::stop_token stop) {
                     args["activity"] = ToJson(*activity);
                 }
                 const nlohmann::json payload = { { "cmd", "SET_ACTIVITY" }, { "args", std::move(args) }, { "nonce", std::to_string(++nonce) } };
-                if (conn.Send(Opcode::frame, payload)) {
+                DebugLog("-> Discord {}", payload.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
+            if (conn.Send(Opcode::frame, payload)) {
                     limiter.OnSent(now);
                     sent_version = version;
                     sent_any = true;

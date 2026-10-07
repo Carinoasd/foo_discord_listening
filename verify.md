@@ -8,11 +8,11 @@
 - [ ] 移除 foo_discord_rich（如有），安裝 `.fb2k-component`，重新啟動 foobar2000。
 - [ ] **Preferences > Components** 列出 *Discord Listening*，版本號正確。
 - [ ] **Preferences > Tools > Discord Listening** 正常開啟；切換 foobar2000 深色模式後，設定頁跟著變色。
-- [ ] 未填 application ID 時，狀態列提示要填 ID。
+- [ ] Application ID 留空時使用內建 ID，狀態顯示 *Connected*。
 
 ## 連線
 
-- [ ] 填入 application ID 並 Apply：狀態變成 *Connected*。
+- [ ] 填入自建的 application ID 並 Apply：重新連線，Discord 顯示自建應用程式的名稱；清空後回到內建的。
 - [ ] 關閉 Discord：狀態變成錯誤訊息，foobar2000 不卡頓。
 - [ ] 重新開啟 Discord：不需任何操作，60 秒內自動重新連上並顯示目前歌曲。
 - [ ] 取消勾選「Show what I'm playing」：Discord 狀態消失；重新勾選後恢復。
@@ -49,6 +49,10 @@
 - [ ] 同一張專輯的其他曲目不會重複上傳（Console 中只有一次）。
 - [ ] 把指令改成不存在的程式：Console 顯示上傳失敗並稍後重試，不會把錯誤訊息當成封面。
 - [ ] `%TEMP%` 中沒有殘留的 `fdl-art-*.jpg`。
+
+## 除錯紀錄
+
+- [ ] Advanced Preferences 開啟 *Write debug log*：profile 下出現 `foo_discord_listening\debug.log`，內含送出與收到的 JSON；關閉後不再寫入。
 
 ## 結束
 

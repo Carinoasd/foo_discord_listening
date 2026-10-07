@@ -33,7 +33,7 @@ inline constexpr char default_upload_command[] = "";
 inline constexpr char default_upload_key_format[] = "$if([%album%],[%album artist%]|[%album%],%path%)";
 
 /// 內建的 Discord 應用程式 ID；使用者沒填時採用。
-inline constexpr char builtin_app_id[] = "";
+inline constexpr char builtin_app_id[] = "1557181309678260225"; // Discord application "foobar2000"
 
 extern cfg_bool enabled;
 extern cfg_string app_id;

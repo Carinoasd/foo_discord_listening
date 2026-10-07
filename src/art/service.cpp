@@ -179,6 +179,7 @@ void Service::Run(std::stop_token stop) {
 }
 
 void Service::Process(const ArtRequest& request) {
+    DebugLog("art lookup: musicbrainz_key=\"{}\" upload_key=\"{}\"", request.musicbrainz_key, request.upload_key);
     KeyState mb;
     KeyState up;
     {
@@ -228,6 +229,7 @@ void Service::Process(const ArtRequest& request) {
 }
 
 void Service::StoreResult(const std::string& key, std::optional<std::string> url) {
+    DebugLog("art result for \"{}\": {}", key, url.value_or("(none)"));
     const bool found = url.has_value();
     {
         std::scoped_lock lock(m_mutex);

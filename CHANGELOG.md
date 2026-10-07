@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   *Local art upload through a user command, downscaled to 512px first.*
 - **封面快取管理。** 設定頁可清除全部快取，右鍵選單可重新抓取所選曲目的封面。
   *Clear the whole art cache from preferences, or re-fetch art for selected tracks from the context menu.*
+- **內建的 Discord 應用程式**，安裝後不需任何設定即可使用；想顯示其他名稱可以填入自建的 Application ID。
+  *A built-in Discord application, so it works with no setup. Enter your own application ID to show a different name.*
+- **除錯紀錄。** 在 Advanced Preferences 開啟後，與 Discord 往來的完整內容會寫入 profile 資料夾的 `debug.log`。
+  *An optional debug log of everything exchanged with Discord, enabled in Advanced Preferences.*
 - Playback 選單的「Show on Discord」開關、支援深色模式的設定頁、x64 與 x86 版本。
   *A Playback menu toggle, a dark-mode-aware preferences page, x64 and x86 builds.*
 

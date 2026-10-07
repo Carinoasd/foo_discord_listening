@@ -32,16 +32,16 @@
 
 1. 到 [Releases](https://github.com/Carinoasd/foo_discord_listening/releases) 下載 `foo_discord_listening-x.y.z.fb2k-component`。
 2. 在 foobar2000 開啟 **File > Preferences > Components**，把檔案拖進去，按 **Apply** 後重新啟動。
-3. 開啟 **File > Preferences > Tools > Discord Listening**，填入 Discord application ID（見下一節）。
+3. 開始播放音樂，Discord 就會顯示「Listening to foobar2000」。設定在 **File > Preferences > Tools > Discord Listening**。
 
 > 如果你同時裝了 foo_discord_rich，請先移除。兩個元件會同時更新 Discord 狀態，互相覆蓋。
 
-### Discord application ID
+### 想顯示其他名稱？
 
-Discord 顯示的「Listening to **XXX**」，其中 XXX 是 Discord 應用程式的名稱。所以你需要一個應用程式：
+「Listening to **foobar2000**」裡的 foobar2000，是內建 Discord 應用程式的名稱。想換成別的字，可以自己建一個應用程式：
 
-1. 到 [Discord Developer Portal](https://discord.com/developers/applications) 按 **New Application**，名稱取為你想顯示的字（例如 `foobar2000`）。
-2. 複製 **Application ID**（一串數字），貼到設定頁的 *Application ID* 欄位，按 **Apply**。
+1. 到 [Discord Developer Portal](https://discord.com/developers/applications) 按 **New Application**，名稱填你想顯示的字。
+2. 複製 **Application ID**（一串數字），貼到設定頁的 *Application ID* 欄位，按 **Apply**。欄位留空就是用內建的。
 
 Application ID 不是密碼，可以公開。
 
@@ -76,7 +76,7 @@ curl -s -F reqtype=fileupload -F fileToUpload=@{path} https://catbox.moe/user/ap
   - 確認 Discord 與 foobar2000 用相同權限執行：以系統管理員身分執行的 Discord，一般權限的程式連不到。
   - 不要在 Discord 裡把 foobar2000 手動加成「遊戲」。
 - **封面是問號或錯的**：對該曲目按右鍵 **Utilities > Re-fetch Discord album art**。若是 MusicBrainz 搜尋錯誤，替檔案加上 `MUSICBRAINZ_ALBUMID` 標籤最準確。
-- **詳細紀錄**：**View > Console**，所有訊息都以 `[foo_discord_listening]` 開頭。
+- **詳細紀錄**：**View > Console**，所有訊息都以 `[foo_discord_listening]` 開頭。需要更詳細的資料時，到 **Preferences > Advanced > Tools > Discord Listening** 開啟 *Write debug log*，送給 Discord 的內容和 Discord 的回應都會寫進 profile 資料夾裡的 `foo_discord_listening\debug.log`。回報問題時請附上這個檔案。
 - 自己的個人檔案上看不到進度條是 Discord 的限制，別人看得到。
 
 ## 從原始碼建置

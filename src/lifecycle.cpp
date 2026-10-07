@@ -25,6 +25,8 @@ class InitQuit : public initquit {
 public:
     void on_init() override {
         Guarded("init", [] {
+            InitLog();
+            DebugLog("foo_discord_listening {} starting", FDL_VERSION);
             const auto profile = filesystem::g_get_native_path(core_api::get_profile_path());
             auto cache = std::filesystem::path(pfc::stringcvt::string_wide_from_utf8(profile.c_str()).get_ptr());
             art::Service::Get().Start(cache / L"foo_discord_listening" / L"art_cache.json");

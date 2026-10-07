@@ -33,6 +33,7 @@ set(FDL_SOURCES
     src/discord/client.cpp
     src/discord/ipc_connection.cpp
     src/lifecycle.cpp
+    src/log.cpp
     src/menus.cpp
     src/playback_callback.cpp
     src/prefs_page.cpp
