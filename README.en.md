@@ -21,6 +21,7 @@ A from-scratch foobar2000 component inspired by [foo_discord_rich](https://githu
   - You can also upload your local art (external or embedded, downscaled first) with a command of your choice.
 - **All three text lines are customizable** with foobar2000 title formatting.
 - **Clearable cache.** The preferences page has a "Clear art cache" button, and the context menu has **Re-fetch Discord album art**.
+- **Playback menu** entries: a *Show on Discord* toggle and *Discord Listening settings*, which opens the preferences page.
 - **Never slows foobar2000 down.**
   - The Discord connection and all network requests run on background threads, and every request has a timeout.
   - The component reconnects automatically when Discord starts.
@@ -31,7 +32,7 @@ A from-scratch foobar2000 component inspired by [foo_discord_rich](https://githu
 
 1. Download `foo_discord_listening-x.y.z.fb2k-component` from [Releases](https://github.com/Carinoasd/foo_discord_listening/releases).
 2. In foobar2000, open **File > Preferences > Components**, drop the file in, click **Apply**, and restart.
-3. Start playing music, and Discord shows "Listening to foobar2000". Settings are in **File > Preferences > Tools > Discord Listening**.
+3. Start playing music, and Discord shows "Listening to foobar2000". Settings are in **File > Preferences > Tools > Discord Listening**, or open them directly with **Playback > Discord Listening settings**.
 
 > If you have foo_discord_rich installed, remove it first. Both components update your Discord status and will overwrite each other.
 
@@ -45,6 +46,8 @@ The "foobar2000" in "Listening to **foobar2000**" is the name of the built-in Di
 The application ID is not a secret.
 
 ## Settings
+
+![Preferences](docs/preferences.png)
 
 | Setting | Default | Notes |
 | --- | --- | --- |

@@ -22,6 +22,7 @@
   - 也可以把本機封面（外部圖檔或內嵌）縮圖後，交給你指定的上傳指令。
 - **三行文字都能自訂**，使用 foobar2000 的 title formatting 語法。
 - **快取可以清除**：設定頁有「清除封面快取」，右鍵選單有「Re-fetch Discord album art」。
+- **Playback 選單**有「Show on Discord」開關，以及直接開啟設定頁的「Discord Listening settings」。
 - **不會拖慢 foobar2000**：
   - 與 Discord 的連線和網路請求都在背景執行緒進行，每個請求都有逾時。
   - Discord 沒開時會自動重試連線。
@@ -32,7 +33,7 @@
 
 1. 到 [Releases](https://github.com/Carinoasd/foo_discord_listening/releases) 下載 `foo_discord_listening-x.y.z.fb2k-component`。
 2. 在 foobar2000 開啟 **File > Preferences > Components**，把檔案拖進去，按 **Apply** 後重新啟動。
-3. 開始播放音樂，Discord 就會顯示「Listening to foobar2000」。設定在 **File > Preferences > Tools > Discord Listening**。
+3. 開始播放音樂，Discord 就會顯示「Listening to foobar2000」。設定在 **File > Preferences > Tools > Discord Listening**，或從 **Playback > Discord Listening settings** 直接開啟。
 
 > 如果你同時裝了 foo_discord_rich，請先移除。兩個元件會同時更新 Discord 狀態，互相覆蓋。
 
@@ -46,6 +47,8 @@
 Application ID 不是密碼，可以公開。
 
 ## 設定說明
+
+![設定頁](docs/preferences.png)
 
 | 設定 | 預設 | 說明 |
 | --- | --- | --- |

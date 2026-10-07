@@ -14,26 +14,35 @@
 namespace fdl {
 namespace {
 
-/// Playback 選單裡的「Show on Discord」開關。
+/// Playback 選單：「Show on Discord」開關，以及直接開啟本元件設定頁的捷徑。
 class MainMenu : public mainmenu_commands {
 public:
-    t_uint32 get_command_count() override { return 1; }
-    GUID get_command(t_uint32) override { return guids::menu_toggle; }
-    void get_name(t_uint32, pfc::string_base& out) override { out = "Show on Discord"; }
-    bool get_description(t_uint32, pfc::string_base& out) override {
-        out = "Shows what you are playing as your Discord status.";
+    enum : t_uint32 { cmd_toggle, cmd_settings, cmd_count };
+
+    t_uint32 get_command_count() override { return cmd_count; }
+    GUID get_command(t_uint32 index) override { return index == cmd_toggle ? guids::menu_toggle : guids::menu_settings; }
+    void get_name(t_uint32 index, pfc::string_base& out) override {
+        out = index == cmd_toggle ? "Show on Discord" : "Discord Listening settings";
+    }
+    bool get_description(t_uint32 index, pfc::string_base& out) override {
+        out = index == cmd_toggle ? "Shows what you are playing as your Discord status." : "Opens the Discord Listening preferences page.";
         return true;
     }
     GUID get_parent() override { return mainmenu_groups::playback; }
     bool get_display(t_uint32 index, pfc::string_base& out, t_uint32& flags) override {
         get_name(index, out);
-        flags = config::enabled ? flag_checked : 0;
+        flags = index == cmd_toggle && config::enabled ? flag_checked : 0;
         return true;
     }
-    void execute(t_uint32, service_ptr_t<service_base>) override {
-        Guarded("menu", [] {
-            config::enabled = !config::enabled;
-            ApplySettings();
+    void execute(t_uint32 index, service_ptr_t<service_base>) override {
+        Guarded("menu", [index] {
+            DebugLog("main menu command {}", index);
+            if (index == cmd_toggle) {
+                config::enabled = !config::enabled;
+                ApplySettings();
+            } else {
+                ui_control::get()->show_preferences(guids::prefs_page);
+            }
         });
     }
 };

@@ -30,8 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   *A built-in Discord application, so it works with no setup. Enter your own application ID to show a different name.*
 - **除錯紀錄。** 在 Advanced Preferences 開啟後，與 Discord 往來的完整內容會寫入 profile 資料夾的 `debug.log`。
   *An optional debug log of everything exchanged with Discord, enabled in Advanced Preferences.*
-- Playback 選單的「Show on Discord」開關、支援深色模式的設定頁、x64 與 x86 版本。
-  *A Playback menu toggle, a dark-mode-aware preferences page, x64 and x86 builds.*
+- Playback 選單的「Show on Discord」開關與「Discord Listening settings」捷徑、支援深色模式的設定頁、x64 與 x86 版本。
+  *A Playback menu toggle and settings shortcut, a dark-mode-aware preferences page, x64 and x86 builds.*
 
 ### 與 foo_discord_rich 相比修正的問題 / Fixed compared to foo_discord_rich
 

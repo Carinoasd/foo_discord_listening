@@ -7,7 +7,7 @@
 
 - [ ] 移除 foo_discord_rich（如有），安裝 `.fb2k-component`，重新啟動 foobar2000。
 - [ ] **Preferences > Components** 列出 *Discord Listening*，版本號正確。
-- [ ] **Preferences > Tools > Discord Listening** 正常開啟；切換 foobar2000 深色模式後，設定頁跟著變色。
+- [ ] **Preferences > Tools > Discord Listening** 正常開啟，所有欄位完整顯示、沒有被下方按鈕遮住；切換 foobar2000 深色模式後，設定頁跟著變色。
 - [ ] Application ID 留空時使用內建 ID，狀態顯示 *Connected*。
 
 ## 連線
@@ -17,6 +17,7 @@
 - [ ] 重新開啟 Discord：不需任何操作，60 秒內自動重新連上並顯示目前歌曲。
 - [ ] 取消勾選「Show what I'm playing」：Discord 狀態消失；重新勾選後恢復。
 - [ ] Playback 選單的 *Show on Discord* 勾選狀態與設定頁同步。
+- [ ] Playback 選單的 *Discord Listening settings* 直接開到本元件的設定頁。
 
 ## 播放狀態
 
