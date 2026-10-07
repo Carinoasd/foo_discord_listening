@@ -75,33 +75,66 @@ int64_t NowMs() {
     return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
-std::optional<discord::Activity> Build() {
-    auto pc = playback_control::get();
-    metadb_handle_ptr track;
-    if (!pc->is_playing() || !pc->get_now_playing(track)) {
-        return std::nullopt;
-    }
-    const bool paused = pc->is_paused();
-    if (paused && config::GetPauseMode() == config::PauseMode::clear) {
-        return std::nullopt;
-    }
+std::string IconUrl(const char* name) {
+    return std::string(config::icon_base_url) + name + ".png";
+}
 
+enum class PlayState { playing, paused, stopped };
+
+/// 依曲目與播放狀態組出 activity。now_playing 為 false 時（停止後保留狀態）只用曲目本身的標籤。
+discord::Activity BuildFor(const metadb_handle_ptr& track, PlayState state, bool now_playing) {
     discord::Activity a;
     a.type = static_cast<discord::ActivityType>(config::ActivityType());
     a.status_display = static_cast<discord::StatusDisplay>(config::StatusDisplay());
-    a.details = FormatTitle(track, config::details_format.get());
-    a.state = FormatTitle(track, config::state_format.get());
-    a.large_text = FormatTitle(track, config::large_text_format.get());
+    a.details = FormatTitle(track, config::details_format.get(), now_playing);
+    a.state = FormatTitle(track, config::state_format.get(), now_playing);
+    a.large_text = FormatTitle(track, config::large_text_format.get(), now_playing);
     if (config::art_enabled) {
         if (auto url = ResolveArt(track)) {
             a.large_image = std::move(*url);
         }
     }
+    if (a.large_image.empty() && config::no_art_image) {
+        // 沒有封面時顯示預設圖，而不是 Discord 的應用程式預設圖示。
+        a.large_image = IconUrl("no-art");
+    }
 
-    if (paused) {
-        // 沒有可用的暫停圖示（small_image），所以把狀態寫在第一行，成員清單上也看得到。
-        a.details = a.details.empty() ? std::string("Paused") : a.details + " (Paused)";
-    } else if (config::show_time) {
+    if (config::small_icons) {
+        switch (state) {
+        case PlayState::playing: a.small_image = IconUrl("playing"); a.small_text = "Playing"; break;
+        case PlayState::paused: a.small_image = IconUrl("paused"); a.small_text = "Paused"; break;
+        case PlayState::stopped: a.small_image = IconUrl("stopped"); a.small_text = "Stopped"; break;
+        }
+    }
+    // 小圖示只出現在個人資料卡上；成員清單只顯示一行文字，所以也可以把狀態寫進第一行。
+    if (config::paused_text && state != PlayState::playing) {
+        const char* label = state == PlayState::paused ? "Paused" : "Stopped";
+        a.details = a.details.empty() ? std::string(label) : a.details + " (" + label + ")";
+    }
+    return a;
+}
+
+/// 停止後保留狀態時使用的最後一首曲目。
+metadb_handle_ptr g_last_track;
+
+std::optional<discord::Activity> Build() {
+    auto pc = playback_control::get();
+    metadb_handle_ptr track;
+    if (!pc->is_playing() || !pc->get_now_playing(track)) {
+        if (config::GetStopMode() == config::StopMode::keep && g_last_track.is_valid()) {
+            return BuildFor(g_last_track, PlayState::stopped, false);
+        }
+        return std::nullopt;
+    }
+    g_last_track = track;
+
+    const bool paused = pc->is_paused();
+    if (paused && config::GetPauseMode() == config::PauseMode::clear) {
+        return std::nullopt;
+    }
+    auto a = BuildFor(track, paused ? PlayState::paused : PlayState::playing, true);
+
+    if (!paused && config::show_time) {
         const double position = pc->playback_get_position();
         const double length = pc->playback_get_length_ex();
         // 取整到秒：Discord 只顯示到秒，而且這樣重複刷新時算出的 activity 完全相同，

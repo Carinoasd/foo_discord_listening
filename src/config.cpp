@@ -19,6 +19,10 @@ cfg_string large_text_format(guids::cfg_large_text_format, default_large_text_fo
 cfg_bool show_time(guids::cfg_show_time, default_show_time);
 cfg_int pause_mode(guids::cfg_pause_mode, static_cast<int64_t>(default_pause_mode));
 cfg_bool art_enabled(guids::cfg_art_enabled, default_art_enabled);
+cfg_bool small_icons(guids::cfg_small_icons, default_small_icons);
+cfg_bool no_art_image(guids::cfg_no_art_image, default_no_art_image);
+cfg_bool paused_text(guids::cfg_paused_text, default_paused_text);
+cfg_int stop_mode(guids::cfg_stop_mode, static_cast<int64_t>(default_stop_mode));
 cfg_int art_source(guids::cfg_art_source, static_cast<int64_t>(default_art_source));
 cfg_string upload_command(guids::cfg_upload_command, default_upload_command);
 cfg_string upload_key_format(guids::cfg_upload_key_format, default_upload_key_format);
@@ -46,6 +50,11 @@ PauseMode GetPauseMode() {
 ArtSource GetArtSource() {
     const auto v = art_source.get();
     return v >= 0 && v <= 2 ? static_cast<ArtSource>(v) : default_art_source;
+}
+
+StopMode GetStopMode() {
+    const auto v = static_cast<StopMode>(stop_mode.get());
+    return v == StopMode::clear || v == StopMode::keep ? v : default_stop_mode;
 }
 
 } // namespace fdl::config

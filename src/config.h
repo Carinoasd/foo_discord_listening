@@ -11,6 +11,11 @@ enum class PauseMode : int64_t {
     keep = 1,  ///< 暫停時保留歌曲資訊，但不顯示時間
 };
 
+enum class StopMode : int64_t {
+    clear = 0, ///< 停止時清除 Discord 狀態
+    keep = 1,  ///< 停止時保留最後一首的資訊，顯示停止圖示
+};
+
 enum class ArtSource : int64_t {
     musicbrainz = 0,            ///< 只查 MusicBrainz / Cover Art Archive
     upload = 1,                 ///< 只上傳本機封面
@@ -27,6 +32,13 @@ inline constexpr char default_large_text_format[] = "[%album%]";
 inline constexpr bool default_show_time = true;
 inline constexpr PauseMode default_pause_mode = PauseMode::keep;
 inline constexpr bool default_art_enabled = true;
+inline constexpr bool default_small_icons = true;
+inline constexpr bool default_no_art_image = true;
+inline constexpr bool default_paused_text = true;
+inline constexpr StopMode default_stop_mode = StopMode::clear;
+
+/// 圖示放在 GitHub repo，以外部網址交給 Discord（不必上傳到 Developer Portal）。
+inline constexpr char icon_base_url[] = "https://raw.githubusercontent.com/Carinoasd/foo_discord_listening/main/assets/";
 inline constexpr ArtSource default_art_source = ArtSource::musicbrainz;
 inline constexpr char default_upload_command[] = "";
 // 同一張專輯只上傳一次；沒有專輯名稱的曲目各自上傳。
@@ -45,6 +57,10 @@ extern cfg_string large_text_format;
 extern cfg_bool show_time;
 extern cfg_int pause_mode; // PauseMode
 extern cfg_bool art_enabled;
+extern cfg_bool small_icons;
+extern cfg_bool no_art_image;
+extern cfg_bool paused_text;
+extern cfg_int stop_mode; // StopMode
 extern cfg_int art_source; // ArtSource
 extern cfg_string upload_command;
 extern cfg_string upload_key_format;
@@ -57,5 +73,6 @@ int64_t ActivityType();
 int64_t StatusDisplay();
 PauseMode GetPauseMode();
 ArtSource GetArtSource();
+StopMode GetStopMode();
 
 } // namespace fdl::config
