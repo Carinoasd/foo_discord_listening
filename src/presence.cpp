@@ -267,6 +267,23 @@ std::string ManualArtKeyFor(const metadb_handle_ptr& track) {
     return key.empty() ? std::string{} : "manual:" + key;
 }
 
+std::string Preview(const char* line1, const char* line2, const char* line3) {
+    metadb_handle_ptr track;
+    if (!playback_control::get()->get_now_playing(track)) {
+        return Tr(StringId::preview_nothing);
+    }
+    // 套用與送給 Discord 相同的長度限制，預覽看到的就是實際會顯示的文字。
+    std::string out;
+    for (const char* pattern : { line1, line2, line3 }) {
+        if (!out.empty()) {
+            out += "\n";
+        }
+        const auto text = discord::FitText(FormatTitle(track, pattern), 128);
+        out += text.empty() ? std::string("—") : text;
+    }
+    return out;
+}
+
 void OnNewTrack() {
     g_stream_title_start_ms.reset();
     g_idle_since_ms.reset();

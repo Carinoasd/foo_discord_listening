@@ -70,6 +70,10 @@ public:
 
 private:
     BOOL OnInitDialog(CWindow, LPARAM) {
+        uSetWindowText(*this, Tr(StringId::ui_manual_caption));
+        uSetDlgItemText(*this, IDC_T_MANUAL_URL_NOTE, Tr(StringId::ui_manual_url_note));
+        uSetDlgItemText(*this, IDOK, Tr(StringId::ui_ok));
+        uSetDlgItemText(*this, IDCANCEL, Tr(StringId::ui_cancel));
         m_dark.AddDialogWithControls(*this);
         uSetDlgItemText(*this, IDC_MANUAL_ALBUM, m_album.c_str());
         uSetDlgItemText(*this, IDC_MANUAL_URL, m_url.c_str());

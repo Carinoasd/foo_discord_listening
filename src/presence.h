@@ -14,6 +14,10 @@ void Refresh();
 
 /// 播放新曲目時呼叫（重設串流計時）。只能在主執行緒呼叫。
 void OnNewTrack();
+/// 用指定的三行格式套用到目前播放的曲目，給設定頁預覽用（尚未套用的格式也能預覽）。
+/// 沒有播放時回傳提示文字。只能在主執行緒呼叫。
+std::string Preview(const char* line1, const char* line2, const char* line3);
+
 /// 暫停狀態改變、或真正停止（非換曲）時呼叫，用於閒置太久後清除狀態。只能在主執行緒呼叫。
 void OnPause(bool paused);
 void OnStop();

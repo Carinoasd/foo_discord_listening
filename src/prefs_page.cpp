@@ -35,6 +35,20 @@ struct TextBinding {
 struct ComboOption {
     StringId label;
     int64_t value;
+    const char* literal = nullptr; ///< 不需翻譯的名稱（例如「Discord PTB」），有值時優先使用
+};
+
+struct IntBinding {
+    int id;
+    cfg_int& var;
+    int64_t default_value;
+    int64_t max_value;
+};
+
+/// 對話框中只放文字的控制項（標籤、群組框、核取方塊文字）與它的翻譯。
+struct LabelBinding {
+    int id;
+    StringId text;
 };
 
 struct ComboBinding {
@@ -50,6 +64,8 @@ struct PageSpec {
     std::span<const CheckBinding> checks;
     std::span<const TextBinding> texts;
     std::span<const ComboBinding> combos;
+    std::span<const IntBinding> ints;
+    std::span<const LabelBinding> labels;
 };
 
 // ---- 主頁 ----
@@ -71,6 +87,13 @@ constexpr ComboOption kPauseModes[] = {
 constexpr ComboOption kStopModes[] = {
     { StringId::stop_clear, static_cast<int64_t>(config::StopMode::clear) },
     { StringId::stop_keep, static_cast<int64_t>(config::StopMode::keep) },
+};
+
+constexpr ComboOption kDiscordClients[] = {
+    { StringId::client_any, 0 },
+    { StringId::client_any, 1, "Discord" },
+    { StringId::client_any, 2, "Discord PTB" },
+    { StringId::client_any, 3, "Discord Canary" },
 };
 
 int64_t ReadPauseMode() {
@@ -99,8 +122,35 @@ const ComboBinding kMainCombos[] = {
     { IDC_STATUS_DISPLAY, config::status_display, &config::StatusDisplay, config::default_status_display, kStatusDisplays },
     { IDC_PAUSE_MODE, config::pause_mode, &ReadPauseMode, static_cast<int64_t>(config::default_pause_mode), kPauseModes },
     { IDC_STOP_MODE, config::stop_mode, &ReadStopMode, static_cast<int64_t>(config::default_stop_mode), kStopModes },
+    { IDC_DISCORD_CLIENT, config::discord_client, &config::DiscordClient, config::default_discord_client, kDiscordClients },
 };
-constexpr PageSpec kMainPage{ kMainChecks, kMainTexts, kMainCombos };
+const IntBinding kMainInts[] = {
+    { IDC_IDLE_MINUTES, config::idle_clear_minutes, config::default_idle_clear_minutes, 24 * 60 },
+};
+constexpr LabelBinding kMainLabels[] = {
+    { IDC_ENABLED, StringId::ui_enabled },
+    { IDC_T_ACTIVITY, StringId::ui_activity },
+    { IDC_T_TYPE, StringId::ui_type },
+    { IDC_SHOW_TIME, StringId::ui_show_time },
+    { IDC_T_STATUS_SHOWS, StringId::ui_status_shows },
+    { IDC_T_WHEN_PAUSED, StringId::ui_when_paused },
+    { IDC_T_IDLE_PREFIX, StringId::ui_idle_prefix },
+    { IDC_T_IDLE_SUFFIX, StringId::ui_idle_suffix },
+    { IDC_T_WHEN_STOPPED, StringId::ui_when_stopped },
+    { IDC_T_TEXT, StringId::ui_text },
+    { IDC_T_LINE1, StringId::ui_line1 },
+    { IDC_T_LINE2, StringId::ui_line2 },
+    { IDC_T_LINE3, StringId::ui_line3 },
+    { IDC_T_PREVIEW, StringId::ui_preview },
+    { IDC_T_ICONS, StringId::ui_icons },
+    { IDC_SMALL_ICONS, StringId::ui_small_icons },
+    { IDC_NO_ART_IMAGE, StringId::ui_no_art_image },
+    { IDC_PAUSED_TEXT, StringId::ui_paused_text },
+    { IDC_T_DISCORD, StringId::ui_discord },
+    { IDC_T_APP_ID, StringId::ui_app_id },
+    { IDC_T_STATUS, StringId::ui_status },
+};
+constexpr PageSpec kMainPage{ kMainChecks, kMainTexts, kMainCombos, kMainInts, kMainLabels };
 
 // ---- 封面頁 ----
 
@@ -119,7 +169,22 @@ const TextBinding kArtTexts[] = {
     { IDC_UPLOAD_KEY, config::upload_key_format, config::default_upload_key_format },
     { IDC_ART_FILTER, config::art_filter_query, config::default_art_filter_query },
 };
-constexpr PageSpec kArtPage{ kArtChecks, kArtTexts, {} };
+constexpr LabelBinding kArtLabels[] = {
+    { IDC_ART_ENABLED, StringId::ui_art_enabled },
+    { IDC_T_SOURCES, StringId::ui_sources },
+    { IDC_T_SERVER, StringId::ui_server },
+    { IDC_T_COUNTRY, StringId::ui_country },
+    { IDC_T_API_KEY, StringId::ui_api_key },
+    { IDC_USE_UPLOAD, StringId::ui_use_upload },
+    { IDC_T_COMMAND, StringId::ui_command },
+    { IDC_T_MANUAL_NOTE, StringId::ui_manual_note },
+    { IDC_T_MATCHING, StringId::ui_matching },
+    { IDC_T_SAME_ALBUM, StringId::ui_same_album },
+    { IDC_T_NO_ART_FOR, StringId::ui_no_art_for },
+    { IDC_T_CACHE, StringId::ui_cache },
+    { IDC_CLEAR_CACHE, StringId::ui_clear_cache },
+};
+constexpr PageSpec kArtPage{ kArtChecks, kArtTexts, {}, {}, kArtLabels };
 
 // ---- 連結與過濾頁 ----
 
@@ -132,8 +197,29 @@ const TextBinding kLinkTexts[] = {
     { IDC_BUTTON2_LABEL, config::button2_label, config::default_button2_label },
     { IDC_BUTTON2_URL, config::button2_url, config::default_button2_url },
     { IDC_FILTER, config::filter_query, config::default_filter_query },
+    { IDC_HIDDEN_PLAYLISTS, config::hidden_playlists, config::default_hidden_playlists },
+    { IDC_ONLY_PLAYLISTS, config::only_playlists, config::default_only_playlists },
 };
-constexpr PageSpec kLinksPage{ {}, kLinkTexts, {} };
+constexpr LabelBinding kLinkLabels[] = {
+    { IDC_T_LINKS_INTRO, StringId::ui_links_intro },
+    { IDC_T_LINKS, StringId::ui_links },
+    { IDC_T_LINE1_LINK, StringId::ui_line1_link },
+    { IDC_T_LINE2_LINK, StringId::ui_line2_link },
+    { IDC_T_ART_LINK, StringId::ui_art_link },
+    { IDC_T_BUTTONS, StringId::ui_buttons },
+    { IDC_T_BUTTON1_TEXT, StringId::ui_button1_text },
+    { IDC_T_BUTTON1_LINK, StringId::ui_button1_link },
+    { IDC_T_BUTTON2_TEXT, StringId::ui_button2_text },
+    { IDC_T_BUTTON2_LINK, StringId::ui_button2_link },
+    { IDC_T_PRIVACY, StringId::ui_privacy },
+    { IDC_T_HIDE_TRACKS, StringId::ui_hide_tracks },
+    { IDC_T_QUERY_NOTE, StringId::ui_query_note },
+    { IDC_T_HIDE_PLAYLISTS, StringId::ui_hide_playlists },
+    { IDC_T_ONLY_PLAYLISTS, StringId::ui_only_playlists },
+    { IDC_T_PLAYLIST_NOTE, StringId::ui_playlist_note },
+    { IDC_T_EXAMPLE, StringId::ui_example },
+};
+constexpr PageSpec kLinksPage{ {}, kLinkTexts, {}, {}, kLinkLabels };
 
 constexpr UINT_PTR kStatusTimer = 1;
 
@@ -163,6 +249,9 @@ public:
         for (const auto& b : Spec.combos) {
             b.var = ComboValue(b);
         }
+        for (const auto& b : Spec.ints) {
+            b.var = IntValue(b);
+        }
         ApplySettings();
         OnChanged();
     }
@@ -176,6 +265,9 @@ public:
         }
         for (const auto& b : Spec.combos) {
             SelectCombo(b, b.default_value);
+        }
+        for (const auto& b : Spec.ints) {
+            this->SetDlgItemInt(b.id, static_cast<UINT>(b.default_value), FALSE);
         }
         UpdateEnabledState();
         OnChanged();
@@ -192,6 +284,17 @@ public:
 
 private:
     BOOL OnInitDialog(CWindow, LPARAM) {
+        for (const auto& l : Spec.labels) {
+            uSetDlgItemText(*this, l.id, Tr(l.text));
+        }
+        for (const auto& b : Spec.ints) {
+            this->SetDlgItemInt(b.id, static_cast<UINT>(b.var.get()), FALSE);
+        }
+        if constexpr (Idd == IDD_PREFS) {
+            // 以提示文字取代原本的「(留空＝使用內建)」標籤，省下版面。
+            this->SendDlgItemMessage(IDC_APP_ID, EM_SETCUEBANNER, TRUE,
+                                     reinterpret_cast<LPARAM>(pfc::stringcvt::string_wide_from_utf8(Tr(StringId::app_id_cue)).get_ptr()));
+        }
         for (const auto& b : Spec.checks) {
             this->CheckDlgButton(b.id, b.var ? BST_CHECKED : BST_UNCHECKED);
         }
@@ -201,13 +304,14 @@ private:
         for (const auto& b : Spec.combos) {
             CComboBox combo(this->GetDlgItem(b.id));
             for (const auto& option : b.options) {
-                combo.AddString(pfc::stringcvt::string_wide_from_utf8(Tr(option.label)));
+                combo.AddString(pfc::stringcvt::string_wide_from_utf8(option.literal ? option.literal : Tr(option.label)));
             }
             SelectCombo(b, b.read());
         }
         m_dark.AddDialogWithControls(*this);
         UpdateEnabledState();
         UpdateStatus();
+        UpdatePreview();
         this->SetTimer(kStatusTimer, 1000);
         m_initialized = true;
         return FALSE;
@@ -218,6 +322,7 @@ private:
     void OnTimer(UINT_PTR id) {
         if (id == kStatusTimer) {
             UpdateStatus();
+            UpdatePreview(); // 換歌時預覽也跟著更新
         }
     }
 
@@ -237,7 +342,20 @@ private:
             return;
         }
         UpdateEnabledState();
+        UpdatePreview();
         OnChanged();
+    }
+
+    /// 用欄位中「尚未套用」的格式預覽目前播放的曲目。
+    void UpdatePreview() {
+        if constexpr (Idd == IDD_PREFS) {
+            const auto text = presence::Preview(uGetDlgItemText(*this, IDC_DETAILS_FORMAT), uGetDlgItemText(*this, IDC_STATE_FORMAT),
+                                                uGetDlgItemText(*this, IDC_LARGE_TEXT_FORMAT));
+            if (text != m_preview) {
+                m_preview = text;
+                uSetDlgItemText(*this, IDC_PREVIEW, text.c_str());
+            }
+        }
     }
 
     bool Checked(int id) { return this->IsDlgButtonChecked(id) == BST_CHECKED; }
@@ -280,6 +398,12 @@ private:
         return sel >= 0 && static_cast<size_t>(sel) < b.options.size() ? b.options[sel].value : b.default_value;
     }
 
+    int64_t IntValue(const IntBinding& b) {
+        BOOL ok = FALSE;
+        const auto v = static_cast<int64_t>(this->GetDlgItemInt(b.id, &ok, FALSE));
+        return ok ? (std::min)(v, b.max_value) : b.default_value;
+    }
+
     void SelectCombo(const ComboBinding& b, int64_t value) {
         int index = 0;
         for (size_t i = 0; i < b.options.size(); ++i) {
@@ -306,6 +430,11 @@ private:
                 return true;
             }
         }
+        for (const auto& b : Spec.ints) {
+            if (IntValue(b) != b.var.get()) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -314,6 +443,7 @@ private:
     const preferences_page_callback::ptr m_callback;
     fb2k::CDarkModeHooks m_dark;
     bool m_initialized = false;
+    std::string m_preview;
 };
 
 using MainDialog = PrefsDialog<IDD_PREFS, kMainPage>;

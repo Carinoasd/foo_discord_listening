@@ -1,0 +1,130 @@
+// foo_discord_listening
+// Copyright (C) 2026 Carinoasd
+// SPDX-License-Identifier: MIT
+
+// 對話框版面（唯一一份）。文字為英文預設值，執行時依 Windows 介面語言由 i18n.cpp 的翻譯表替換。
+
+IDD_PREFS DIALOGEX 0, 0, 332, 276
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    AUTOCHECKBOX    "Show what I'm playing on Discord", IDC_ENABLED, 7, 3, 318, 10
+
+    GROUPBOX        "Activity", IDC_T_ACTIVITY, 7, 16, 318, 74
+    LTEXT           "Type:", IDC_T_TYPE, 15, 30, 70, 8
+    COMBOBOX        IDC_ACTIVITY_TYPE, 90, 28, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    AUTOCHECKBOX    "Show progress bar", IDC_SHOW_TIME, 218, 30, 104, 10
+    LTEXT           "Status shows:", IDC_T_STATUS_SHOWS, 15, 45, 70, 8
+    COMBOBOX        IDC_STATUS_DISPLAY, 90, 43, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "When paused:", IDC_T_WHEN_PAUSED, 15, 60, 70, 8
+    COMBOBOX        IDC_PAUSE_MODE, 90, 58, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Clear after", IDC_T_IDLE_PREFIX, 218, 60, 44, 8
+    EDITTEXT        IDC_IDLE_MINUTES, 263, 58, 22, 12, ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "min", IDC_T_IDLE_SUFFIX, 288, 60, 34, 8
+    LTEXT           "When stopped:", IDC_T_WHEN_STOPPED, 15, 75, 70, 8
+    COMBOBOX        IDC_STOP_MODE, 90, 73, 120, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    GROUPBOX        "Text (title formatting)", IDC_T_TEXT, 7, 94, 318, 59
+    LTEXT           "Line 1:", IDC_T_LINE1, 15, 108, 72, 8
+    EDITTEXT        IDC_DETAILS_FORMAT, 90, 106, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 2:", IDC_T_LINE2, 15, 123, 72, 8
+    EDITTEXT        IDC_STATE_FORMAT, 90, 121, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 3 / art tooltip:", IDC_T_LINE3, 15, 138, 72, 8
+    EDITTEXT        IDC_LARGE_TEXT_FORMAT, 90, 136, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Preview", IDC_T_PREVIEW, 7, 157, 318, 40
+    LTEXT           "", IDC_PREVIEW, 15, 168, 303, 26, SS_NOPREFIX
+
+    GROUPBOX        "Icons", IDC_T_ICONS, 7, 200, 318, 34
+    AUTOCHECKBOX    "Play / pause / stop icon", IDC_SMALL_ICONS, 15, 211, 150, 10
+    AUTOCHECKBOX    "Placeholder when there's no art", IDC_NO_ART_IMAGE, 168, 211, 152, 10
+    AUTOCHECKBOX    "Add (Paused) / (Stopped) to line 1", IDC_PAUSED_TEXT, 15, 222, 300, 10
+
+    GROUPBOX        "Discord", IDC_T_DISCORD, 7, 237, 318, 38
+    LTEXT           "Application ID:", IDC_T_APP_ID, 15, 249, 70, 8
+    EDITTEXT        IDC_APP_ID, 90, 247, 120, 12, ES_AUTOHSCROLL | ES_NUMBER
+    COMBOBOX        IDC_DISCORD_CLIENT, 215, 247, 103, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Status:", IDC_T_STATUS, 15, 263, 70, 8
+    LTEXT           "", IDC_STATUS, 90, 263, 228, 8, SS_NOPREFIX
+END
+
+IDD_PREFS_ART DIALOGEX 0, 0, 332, 276
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    AUTOCHECKBOX    "Show album art", IDC_ART_ENABLED, 7, 3, 318, 10
+
+    GROUPBOX        "Sources (tried in this order)", IDC_T_SOURCES, 7, 16, 318, 106
+    AUTOCHECKBOX    "MusicBrainz", IDC_USE_MUSICBRAINZ, 15, 30, 80, 10
+    LTEXT           "Server:", IDC_T_SERVER, 100, 31, 44, 8
+    EDITTEXT        IDC_MUSICBRAINZ_SERVER, 145, 28, 173, 12, ES_AUTOHSCROLL
+    AUTOCHECKBOX    "iTunes", IDC_USE_ITUNES, 15, 46, 80, 10
+    LTEXT           "Store country:", IDC_T_COUNTRY, 100, 47, 54, 8
+    EDITTEXT        IDC_ITUNES_COUNTRY, 155, 44, 30, 12, ES_AUTOHSCROLL | ES_UPPERCASE
+    AUTOCHECKBOX    "Last.fm", IDC_USE_LASTFM, 15, 62, 80, 10
+    LTEXT           "API key:", IDC_T_API_KEY, 100, 63, 44, 8
+    EDITTEXT        IDC_LASTFM_KEY, 145, 60, 173, 12, ES_AUTOHSCROLL
+    AUTOCHECKBOX    "Upload local art", IDC_USE_UPLOAD, 15, 78, 82, 10
+    LTEXT           "Command:", IDC_T_COMMAND, 100, 79, 44, 8
+    EDITTEXT        IDC_UPLOAD_COMMAND, 145, 76, 173, 12, ES_AUTOHSCROLL
+    LTEXT           "", IDC_T_MANUAL_NOTE, 15, 94, 303, 24
+
+    GROUPBOX        "Matching", IDC_T_MATCHING, 7, 126, 318, 50
+    LTEXT           "Same album if equal:", IDC_T_SAME_ALBUM, 15, 140, 75, 8
+    EDITTEXT        IDC_UPLOAD_KEY, 90, 138, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "No art for tracks:", IDC_T_NO_ART_FOR, 15, 156, 75, 8
+    EDITTEXT        IDC_ART_FILTER, 90, 154, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Cache", IDC_T_CACHE, 7, 180, 318, 34
+    PUSHBUTTON      "Clear art cache", IDC_CLEAR_CACHE, 15, 193, 70, 14
+    LTEXT           "", IDC_CACHE_INFO, 90, 196, 228, 8
+END
+
+IDD_PREFS_LINKS DIALOGEX 0, 0, 332, 276
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "", IDC_T_LINKS_INTRO, 7, 3, 318, 18
+
+    GROUPBOX        "Links", IDC_T_LINKS, 7, 23, 318, 57
+    LTEXT           "Line 1 link:", IDC_T_LINE1_LINK, 15, 36, 72, 8
+    EDITTEXT        IDC_DETAILS_URL, 90, 34, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Line 2 link:", IDC_T_LINE2_LINK, 15, 51, 72, 8
+    EDITTEXT        IDC_STATE_URL, 90, 49, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Album art link:", IDC_T_ART_LINK, 15, 66, 72, 8
+    EDITTEXT        IDC_LARGE_URL, 90, 64, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Buttons", IDC_T_BUTTONS, 7, 83, 318, 72
+    LTEXT           "Button 1 text:", IDC_T_BUTTON1_TEXT, 15, 96, 72, 8
+    EDITTEXT        IDC_BUTTON1_LABEL, 90, 94, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Button 1 link:", IDC_T_BUTTON1_LINK, 15, 111, 72, 8
+    EDITTEXT        IDC_BUTTON1_URL, 90, 109, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Button 2 text:", IDC_T_BUTTON2_TEXT, 15, 126, 72, 8
+    EDITTEXT        IDC_BUTTON2_LABEL, 90, 124, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Button 2 link:", IDC_T_BUTTON2_LINK, 15, 141, 72, 8
+    EDITTEXT        IDC_BUTTON2_URL, 90, 139, 228, 12, ES_AUTOHSCROLL
+
+    GROUPBOX        "Privacy", IDC_T_PRIVACY, 7, 158, 318, 92
+    LTEXT           "Hide tracks:", IDC_T_HIDE_TRACKS, 15, 171, 72, 8
+    EDITTEXT        IDC_FILTER, 90, 169, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "", IDC_T_QUERY_NOTE, 90, 183, 228, 16
+    LTEXT           "Hide playlists:", IDC_T_HIDE_PLAYLISTS, 15, 203, 72, 8
+    EDITTEXT        IDC_HIDDEN_PLAYLISTS, 90, 201, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "Only playlists:", IDC_T_ONLY_PLAYLISTS, 15, 218, 72, 8
+    EDITTEXT        IDC_ONLY_PLAYLISTS, 90, 216, 228, 12, ES_AUTOHSCROLL
+    LTEXT           "", IDC_T_PLAYLIST_NOTE, 90, 230, 228, 16
+
+    LTEXT           "", IDC_T_EXAMPLE, 7, 254, 318, 20
+END
+
+IDD_MANUAL_ART DIALOGEX 0, 0, 300, 82
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set Discord album art"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "", IDC_MANUAL_ALBUM, 7, 7, 286, 8, SS_NOPREFIX
+    LTEXT           "", IDC_T_MANUAL_URL_NOTE, 7, 21, 286, 8
+    EDITTEXT        IDC_MANUAL_URL, 7, 33, 286, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK", IDOK, 189, 58, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 243, 58, 50, 14
+END
